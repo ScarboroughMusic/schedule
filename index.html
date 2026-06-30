@@ -61,14 +61,36 @@
   .today-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 0 14px; height: 36px; font-size: 13px; cursor: pointer; color: var(--text-secondary); font-family: inherit; transition: all 0.15s; }
   .today-btn:hover { border-color: var(--border-strong); color: var(--text); }
   .calendar-grid { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
-  .cal-header { display: grid; grid-template-columns: repeat(7, 1fr); border-bottom: 1px solid var(--border); }
-  .cal-day-label { text-align: center; padding: 10px 0; font-size: 11px; font-weight: 600; color: var(--text-muted); letter-spacing: 0.06em; text-transform: uppercase; }
-  .cal-body { display: grid; grid-template-columns: repeat(7, 1fr); }
-  .cal-cell { border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); min-height: 90px; padding: 8px; cursor: pointer; transition: background 0.1s; }
-  .cal-cell:nth-child(7n) { border-right: none; }
-  .cal-cell:hover { background: var(--surface-2); }
+  .cal-header { display: flex; border-bottom: 1px solid var(--border); }
+  .cal-day-label { flex: 1; text-align: center; padding: 10px 0; font-size: 11px; font-weight: 600; color: var(--text-muted); letter-spacing: 0.06em; text-transform: uppercase; }
+  .cal-day-label.emphasized { flex: 1.6; color: var(--text-secondary); }
+  .cal-body { display: flex; flex-direction: column; }
+  .cal-week-row { display: flex; border-bottom: 1px solid var(--border); }
+  .cal-week-row:last-child { border-bottom: none; }
+  .cal-cell { flex: 1; border-right: 1px solid var(--border); min-height: 90px; padding: 8px; cursor: pointer; transition: background 0.1s; display: flex; flex-direction: column; }
+  .cal-cell.emphasized { flex: 1.6; min-height: 130px; background: var(--surface-2); }
+  .cal-cell:last-child { border-right: none; }
+  .cal-cell:hover { background: var(--accent-light); }
+  .cal-cell.emphasized:hover { background: var(--accent-light); }
   .cal-cell.other-month { opacity: 0.35; }
   .cal-cell.today .date-num { background: var(--accent); color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; }
+  .cal-cell-groups { display: flex; flex-direction: column; gap: 3px; margin-top: 2px; flex: 1; }
+  .cal-group-block { font-size: 11px; padding: 4px 7px; border-radius: 6px; font-weight: 600; line-height: 1.3; }
+  .cal-cell.emphasized .cal-group-block { font-size: 12px; padding: 6px 9px; }
+  .cal-group-block .grp-type { font-size: 9px; font-weight: 500; opacity: 0.75; text-transform: uppercase; letter-spacing: 0.04em; display: block; margin-bottom: 1px; }
+  .cal-empty-hint { font-size: 10px; color: var(--text-muted); margin-top: 4px; opacity: 0; transition: opacity 0.15s; }
+  .cal-cell:hover .cal-empty-hint { opacity: 1; }
+
+  .week-view { display: flex; flex-direction: column; gap: 10px; }
+  .week-day-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 14px 16px; cursor: pointer; transition: all 0.15s; }
+  .week-day-card:hover { border-color: var(--border-strong); box-shadow: var(--shadow); }
+  .week-day-card.emphasized { border-left: 3px solid var(--accent); background: var(--accent-light); }
+  .week-day-card.today { border-color: var(--accent); }
+  .week-day-header { display: flex; align-items: baseline; gap: 8px; margin-bottom: 8px; }
+  .week-day-name { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+  .week-day-date { font-size: 13px; color: var(--text-muted); }
+  .week-day-groups { display: flex; flex-wrap: wrap; gap: 6px; }
+  .week-empty { font-size: 12px; color: var(--text-muted); }
   .date-num { font-size: 13px; font-weight: 500; color: var(--text-secondary); width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; margin-bottom: 4px; }
   .cal-event { font-size: 11px; padding: 2px 6px; border-radius: 4px; margin-bottom: 2px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .cal-event.rehearsal { background: var(--accent-light); color: var(--accent-dark); }
@@ -194,25 +216,18 @@
   .action-btns { display: flex; gap: 6px; }
   .btn-sm { padding: 4px 10px; font-size: 12px; }
 
-  /* DRAG & DROP SCHEDULE BUILDER */
-  .schedule-builder { display: grid; grid-template-columns: 280px 1fr; gap: 20px; align-items: start; }
-  .event-palette { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px; }
-  .event-palette h3 { font-size: 14px; font-weight: 600; margin-bottom: 12px; }
-  .draggable-event { padding: 8px 12px; border-radius: 8px; margin-bottom: 6px; cursor: grab; font-size: 13px; font-weight: 500; border: 1px solid; display: flex; align-items: center; gap: 8px; user-select: none; }
-  .draggable-event:active { cursor: grabbing; opacity: 0.7; }
-  .draggable-event.rehearsal { background: var(--accent-light); color: var(--accent-dark); border-color: #c5d5ee; }
-  .draggable-event.performance { background: var(--teal-light); color: var(--teal); border-color: #a8d8c8; }
-  .draggable-event.special { background: var(--amber-light); color: var(--amber); border-color: #f0d090; }
+  /* SCHEDULE BUILDER */
+  .schedule-builder { display: grid; grid-template-columns: 1fr 320px; gap: 20px; align-items: start; }
   .mini-cal { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
   .mini-cal-header { display: flex; align-items: center; padding: 12px 14px; border-bottom: 1px solid var(--border); gap: 8px; }
   .mini-cal-title { font-size: 14px; font-weight: 600; flex: 1; }
   .mini-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
   .mini-cal-label { text-align: center; padding: 6px 0; font-size: 10px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
-  .mini-cal-cell { text-align: center; padding: 6px 4px; font-size: 13px; min-height: 52px; border: 1px solid transparent; transition: all 0.1s; position: relative; }
+  .mini-cal-cell { text-align: center; padding: 6px 4px; font-size: 13px; min-height: 52px; border: 1px solid transparent; transition: all 0.1s; position: relative; cursor: pointer; }
+  .mini-cal-cell:hover { background: var(--accent-light); }
   .mini-cal-cell .dn { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 2px; font-size: 12px; color: var(--text-secondary); }
   .mini-cal-cell.today .dn { background: var(--accent); color: white; }
   .mini-cal-cell.other { opacity: 0.3; }
-  .mini-cal-cell.drop-target { background: var(--accent-light); border-color: var(--accent); border-radius: 4px; }
   .mini-cal-cell .ev-dot { width: 6px; height: 6px; border-radius: 50%; margin: 1px auto; }
   .mini-cal-cell .ev-dot.rehearsal { background: var(--accent); }
   .mini-cal-cell .ev-dot.performance { background: var(--teal); }
@@ -267,19 +282,24 @@
   <div class="upcoming-strip" id="upcoming-strip"></div>
   <div class="month-nav">
     <div class="month-title" id="month-title"></div>
+    <div class="filter-tabs" style="margin-right:8px">
+      <button class="filter-tab active" id="view-tab-month" onclick="setScheduleView('month')">Month</button>
+      <button class="filter-tab" id="view-tab-week" onclick="setScheduleView('week')">Week</button>
+    </div>
     <button class="today-btn" onclick="goToday()">Today</button>
     <button class="icon-btn" onclick="changeMonth(-1)">&#8249;</button>
     <button class="icon-btn" onclick="changeMonth(1)">&#8250;</button>
   </div>
-  <div class="calendar-grid">
+  <div class="calendar-grid" id="month-view-wrap">
     <div class="cal-header">
       <div class="cal-day-label">Sun</div><div class="cal-day-label">Mon</div>
       <div class="cal-day-label">Tue</div><div class="cal-day-label">Wed</div>
-      <div class="cal-day-label">Thu</div><div class="cal-day-label">Fri</div>
-      <div class="cal-day-label">Sat</div>
+      <div class="cal-day-label">Thu</div><div class="cal-day-label emphasized">Fri</div>
+      <div class="cal-day-label emphasized">Sat</div>
     </div>
     <div class="cal-body" id="cal-body"></div>
   </div>
+  <div class="week-view" id="week-view-wrap" style="display:none"></div>
 </div>
 
 <!-- ROSTER PAGE -->
@@ -364,34 +384,10 @@
     <div class="admin-section active" id="tab-schedule">
       <div class="schedule-builder">
         <div>
-          <div class="event-palette">
-            <h3>Add to calendar</h3>
-            <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Drag an event type onto a date, or click to add manually.</p>
-            <div class="draggable-event rehearsal" draggable="true" ondragstart="startDrag(event,'rehearsal')">🎸 Rehearsal</div>
-            <div class="draggable-event performance" draggable="true" ondragstart="startDrag(event,'performance')">✨ Performance</div>
-            <div class="draggable-event special" draggable="true" ondragstart="startDrag(event,'special')">🎤 Special music</div>
-            <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
-              <div class="form-group">
-                <label>Or click a date to add event</label>
-                <select id="quick-event-type">
-                  <option value="rehearsal">Rehearsal</option>
-                  <option value="performance">Performance</option>
-                  <option value="special">Special music</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label>Event title (optional)</label>
-                <input type="text" id="quick-event-title" placeholder="e.g. Week 2 Band Rehearsal">
-              </div>
-              <div class="form-group">
-                <label>Time</label>
-                <input type="text" id="quick-event-time" placeholder="e.g. 6:00 PM">
-              </div>
-            </div>
-          </div>
+          <div class="mini-cal" id="admin-cal"></div>
+          <div id="quick-schedule-panel" style="display:none"></div>
         </div>
         <div>
-          <div class="mini-cal" id="admin-cal"></div>
           <div class="event-list-admin" id="admin-event-list"></div>
         </div>
       </div>
@@ -602,7 +598,6 @@ let adminEmail = null;
 const today = new Date();
 let viewMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 let adminViewMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-let dragType = null;
 let activeFilter = 'all';
 const colorCycle = ['blue','teal','amber','rose','purple'];
 
@@ -702,8 +697,21 @@ function showPage(name, btn) {
 }
 
 // ── CALENDAR (PUBLIC) ─────────────────────────────────────
+let scheduleView = 'month';
+
+function setScheduleView(v) {
+  scheduleView = v;
+  document.getElementById('view-tab-month').classList.toggle('active', v === 'month');
+  document.getElementById('view-tab-week').classList.toggle('active', v === 'week');
+  document.getElementById('month-view-wrap').style.display = v === 'month' ? '' : 'none';
+  document.getElementById('week-view-wrap').style.display = v === 'week' ? '' : 'none';
+  renderCalendar();
+}
+
 function renderCalendar() {
   renderUpcoming();
+  if (scheduleView === 'week') { renderWeekView(); return; }
+
   const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   document.getElementById('month-title').textContent = monthNames[viewMonth.getMonth()] + ' ' + viewMonth.getFullYear();
   const body = document.getElementById('cal-body');
@@ -714,15 +722,83 @@ function renderCalendar() {
   for (let i = 0; i < first.getDay(); i++) cells.push({ d: new Date(viewMonth.getFullYear(), viewMonth.getMonth(), -(first.getDay() - 1 - i)), other: true });
   for (let d = 1; d <= last.getDate(); d++) cells.push({ d: new Date(viewMonth.getFullYear(), viewMonth.getMonth(), d), other: false });
   while (cells.length % 7 !== 0) cells.push({ d: new Date(viewMonth.getFullYear(), viewMonth.getMonth() + 1, cells.length - last.getDate() - first.getDay() + 1), other: true });
-  cells.forEach(({ d, other }) => {
-    const cell = document.createElement('div');
-    cell.className = 'cal-cell' + (other ? ' other-month' : '') + (sameDay(d, today) ? ' today' : '');
-    const evs = events.filter(e => sameDay(e.date, d));
-    let html = '<div class="date-num">' + d.getDate() + '</div>';
-    evs.forEach(e => { html += '<div class="cal-event ' + e.type + '" onclick="showEventModal(' + e.id + ');event.stopPropagation()">' + e.title + '</div>'; });
-    cell.innerHTML = html;
-    body.appendChild(cell);
-  });
+
+  for (let w = 0; w < cells.length; w += 7) {
+    const row = document.createElement('div');
+    row.className = 'cal-week-row';
+    cells.slice(w, w + 7).forEach(({ d, other }) => {
+      const emphasized = d.getDay() === 5 || d.getDay() === 6; // Fri or Sat
+      const cell = document.createElement('div');
+      cell.className = 'cal-cell' + (other ? ' other-month' : '') + (sameDay(d, today) ? ' today' : '') + (emphasized ? ' emphasized' : '');
+      const dayEvents = events.filter(e => sameDay(e.date, d));
+      let html = '<div class="date-num">' + d.getDate() + '</div><div class="cal-cell-groups">';
+      dayEvents.forEach(e => {
+        const typeLabel = { rehearsal: 'Rehearsal', performance: 'Performance', special: 'Special music' }[e.type] || '';
+        const groupLabel = e.groups.length ? e.groups.join(', ') : (e.title || typeLabel);
+        html += '<div class="cal-group-block ' + e.type + '-block" style="background:var(' + typeBg(e.type) + ');color:var(' + typeFg(e.type) + ')" onclick="showEventModal(' + e.id + ');event.stopPropagation()"><span class="grp-type">' + typeLabel + '</span>' + groupLabel + '</div>';
+      });
+      html += '</div>';
+      if (dayEvents.length === 0) html += '<div class="cal-empty-hint">+ schedule</div>';
+      cell.innerHTML = html;
+      cell.onclick = () => onCalendarCellClick(d);
+      row.appendChild(cell);
+    });
+    body.appendChild(row);
+  }
+}
+
+function typeBg(type) { return { rehearsal: '--accent-light', performance: '--teal-light', special: '--amber-light' }[type] || '--surface-2'; }
+function typeFg(type) { return { rehearsal: '--accent-dark', performance: '--teal', special: '--amber' }[type] || '--text'; }
+
+function renderWeekView() {
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  // Find the Sunday that starts the week containing viewMonth's "anchor" (use today if viewing current month, else 1st of viewMonth)
+  const anchor = (viewMonth.getFullYear() === today.getFullYear() && viewMonth.getMonth() === today.getMonth()) ? today : new Date(viewMonth.getFullYear(), viewMonth.getMonth(), 1);
+  const weekStart = new Date(anchor);
+  weekStart.setDate(anchor.getDate() - anchor.getDay());
+  document.getElementById('month-title').textContent = 'Week of ' + weekStart.toLocaleDateString('en-CA', { month: 'long', day: 'numeric' });
+
+  const wrap = document.getElementById('week-view-wrap');
+  let html = '';
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(weekStart);
+    d.setDate(weekStart.getDate() + i);
+    const emphasized = d.getDay() === 5 || d.getDay() === 6;
+    const dayEvents = events.filter(e => sameDay(e.date, d));
+    html += '<div class="week-day-card' + (emphasized ? ' emphasized' : '') + (sameDay(d, today) ? ' today' : '') + '" onclick="onCalendarCellClickFromWeek(' + i + ')">' +
+      '<div class="week-day-header"><span class="week-day-name">' + d.toLocaleDateString('en-CA', { weekday: 'long' }) + '</span><span class="week-day-date">' + d.toLocaleDateString('en-CA', { month: 'short', day: 'numeric' }) + '</span></div>' +
+      '<div class="week-day-groups">' +
+      (dayEvents.length ? dayEvents.map(e => {
+        const typeLabel = { rehearsal: 'Rehearsal', performance: 'Performance', special: 'Special music' }[e.type] || '';
+        const groupLabel = e.groups.length ? e.groups.join(', ') : (e.title || typeLabel);
+        return '<div class="cal-group-block" style="background:var(' + typeBg(e.type) + ');color:var(' + typeFg(e.type) + ')" onclick="showEventModal(' + e.id + ');event.stopPropagation()"><span class="grp-type">' + typeLabel + '</span>' + groupLabel + '</div>';
+      }).join('') : '<span class="week-empty">Nothing scheduled</span>') +
+      '</div></div>';
+  }
+  wrap.innerHTML = html;
+  wrap._weekStart = weekStart;
+}
+
+function onCalendarCellClickFromWeek(dayOffset) {
+  const wrap = document.getElementById('week-view-wrap');
+  const d = new Date(wrap._weekStart);
+  d.setDate(wrap._weekStart.getDate() + dayOffset);
+  onCalendarCellClick(d);
+}
+
+// Clicking any date: admins get the quick-schedule panel pre-filled to that
+// date; everyone else (or admins with nothing to add) just sees what's there.
+function onCalendarCellClick(d) {
+  const dayEvents = events.filter(e => sameDay(e.date, d));
+  if (isAdmin) {
+    showPage('admin', document.querySelector('.admin-btn'));
+    setTimeout(() => {
+      showAdminTab('tab-schedule', document.querySelector('.admin-tab'));
+      openQuickSchedule(d);
+    }, 0);
+  } else if (dayEvents.length) {
+    showEventModal(dayEvents[0].id);
+  }
 }
 
 function renderUpcoming() {
@@ -755,16 +831,29 @@ function showEventModal(id) {
   if (!e) return;
   document.getElementById('modal-event-type').textContent = { rehearsal: 'Rehearsal', performance: 'Performance', special: 'Special music' }[e.type];
   document.getElementById('modal-event-type').style.color = { rehearsal: 'var(--accent)', performance: 'var(--teal)', special: 'var(--amber)' }[e.type];
-  document.getElementById('modal-event-title').textContent = e.title;
+  document.getElementById('modal-event-title').textContent = e.groups.length ? e.groups.join(' + ') : (e.title || '');
   document.getElementById('modal-meta').innerHTML =
     '<div class="meta-item">📅 ' + e.date.toLocaleDateString('en-CA', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) + '</div>' +
     '<div class="meta-item">🕐 ' + e.time + '</div>';
   const assigns = document.getElementById('modal-assignments');
-  assigns.innerHTML = e.assignedIds.map((mid, i) => {
-    const m = members.find(x => x.id === mid);
-    const role = e.assignedRoles[i] || '';
-    return m ? '<div class="assignment-row"><div class="mini-avatar av-' + m.color + '">' + initials(m) + '</div><div class="assignment-name">' + fullName(m) + '</div><div class="assignment-role">' + role + '</div></div>' : '';
-  }).join('') || '<p style="font-size:13px;color:var(--text-muted)">No one assigned yet.</p>';
+  let html = '';
+  e.groups.forEach(gName => {
+    const g = groups.find(x => x.name === gName);
+    if (!g) return;
+    html += '<div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin:10px 0 4px">' + gName + '</div>';
+    html += g.members.map(mid => {
+      const m = members.find(x => x.id === mid);
+      return m ? '<div class="assignment-row"><div class="mini-avatar av-' + m.color + '">' + initials(m) + '</div><div class="assignment-name">' + fullName(m) + '</div><div class="assignment-role">' + (m.roles[0] || '') + '</div></div>' : '';
+    }).join('');
+  });
+  if (!html && e.assignedIds.length) {
+    html = e.assignedIds.map((mid, i) => {
+      const m = members.find(x => x.id === mid);
+      const role = e.assignedRoles[i] || '';
+      return m ? '<div class="assignment-row"><div class="mini-avatar av-' + m.color + '">' + initials(m) + '</div><div class="assignment-name">' + fullName(m) + '</div><div class="assignment-role">' + role + '</div></div>' : '';
+    }).join('');
+  }
+  assigns.innerHTML = html || '<p style="font-size:13px;color:var(--text-muted)">No one assigned yet.</p>';
   document.getElementById('event-modal').classList.add('open');
 }
 function closeModal() { document.getElementById('event-modal').classList.remove('open'); }
@@ -925,6 +1014,8 @@ function showAdminTab(id, btn) {
 }
 
 // ── ADMIN CALENDAR ────────────────────────────────────────
+function dateStr(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+
 function renderAdminCal() {
   const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   const cal = document.getElementById('admin-cal');
@@ -947,12 +1038,8 @@ function renderAdminCal() {
   cells.forEach(({ d, other }) => {
     const evs = events.filter(e => sameDay(e.date, d));
     const isTod = sameDay(d, today);
-    const dateStr = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
     html += '<div class="mini-cal-cell' + (other ? ' other' : '') + (isTod ? ' today' : '') + '"' +
-      ' ondragover="event.preventDefault();this.classList.add(\'drop-target\')"' +
-      ' ondragleave="this.classList.remove(\'drop-target\')"' +
-      ' ondrop="dropEvent(event,\'' + dateStr + '\')"' +
-      ' onclick="clickAddEvent(\'' + dateStr + '\')">' +
+      ' onclick="openQuickScheduleFromStr(\'' + dateStr(d) + '\')">' +
       '<div class="dn">' + d.getDate() + '</div>' +
       evs.map(e => '<div class="ev-dot ' + e.type + '"></div>').join('') +
     '</div>';
@@ -966,38 +1053,100 @@ function adminChangeMonth(d) { adminViewMonth = new Date(adminViewMonth.getFullY
 
 function renderAdminEventList() {
   const upcoming = events.filter(e => e.date >= new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1)).sort((a, b) => a.date - b.date);
-  document.getElementById('admin-event-list').innerHTML = upcoming.map(e => '<div class="event-item-admin">' +
-    '<div class="ev-label">' +
-      '<div class="ev-type ' + e.type + '">' + { rehearsal: 'Rehearsal', performance: 'Performance', special: 'Special music' }[e.type] + '</div>' +
-      '<div style="font-weight:500">' + e.title + '</div>' +
-      '<div style="color:var(--text-muted);font-size:11px">' + e.date.toLocaleDateString('en-CA', { month: 'short', day: 'numeric' }) + ' · ' + e.time + '</div>' +
-    '</div>' +
-    '<button class="btn btn-danger btn-sm" onclick="deleteEvent(' + e.id + ')">Remove</button>' +
-  '</div>').join('') || '<p style="font-size:13px;color:var(--text-muted);padding:12px 0">No upcoming events. Drag an event type onto the calendar or click a date to add one.</p>';
+  document.getElementById('admin-event-list').innerHTML = upcoming.map(e => {
+    const typeLabel = { rehearsal: 'Rehearsal', performance: 'Performance', special: 'Special music' }[e.type];
+    const groupLabel = e.groups.length ? e.groups.join(', ') : (e.title || typeLabel);
+    return '<div class="event-item-admin">' +
+      '<div class="ev-label">' +
+        '<div class="ev-type ' + e.type + '">' + typeLabel + '</div>' +
+        '<div style="font-weight:500">' + groupLabel + '</div>' +
+        '<div style="color:var(--text-muted);font-size:11px">' + e.date.toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' }) + ' · ' + e.time + '</div>' +
+      '</div>' +
+      '<div class="action-btns">' +
+        '<button class="btn btn-secondary btn-sm" onclick="openQuickSchedule(new Date(' + e.date.getFullYear() + ',' + e.date.getMonth() + ',' + e.date.getDate() + '))">Edit</button>' +
+        '<button class="btn btn-danger btn-sm" onclick="deleteEvent(' + e.id + ')">Remove</button>' +
+      '</div>' +
+    '</div>';
+  }).join('') || '<p style="font-size:13px;color:var(--text-muted);padding:12px 0">Nothing scheduled yet. Click a date on the calendar to schedule a group.</p>';
 }
 
-function startDrag(e, type) { dragType = type; }
-
-function dropEvent(e, dateStr) {
-  e.preventDefault();
-  e.currentTarget.classList.remove('drop-target');
-  if (!dragType) return;
-  addEventToDate(dragType, dateStr);
-  dragType = null;
+// Auto-suggest event type from the day of week: Friday -> rehearsal,
+// Saturday -> performance, anything else -> defaults to rehearsal but is
+// always overridable in the panel.
+function suggestedTypeForDate(d) {
+  if (d.getDay() === 5) return 'rehearsal';
+  if (d.getDay() === 6) return 'performance';
+  return 'rehearsal';
 }
 
-function clickAddEvent(dateStr) {
-  const type = document.getElementById('quick-event-type').value;
-  addEventToDate(type, dateStr);
+function openQuickScheduleFromStr(dStr) {
+  const parts = dStr.split('-').map(Number);
+  openQuickSchedule(new Date(parts[0], parts[1] - 1, parts[2]));
 }
 
-async function addEventToDate(type, dateStr) {
-  const title = document.getElementById('quick-event-title').value || { rehearsal: 'Rehearsal', performance: 'Performance', special: 'Special music' }[type];
-  const time = document.getElementById('quick-event-time').value || '6:00 PM';
-  const result = await callApi('addEvent', { type, title, date: dateStr, time, groupNames: [], assignedMemberIds: [], assignedRoles: [] });
+// The core scheduling action: click a date, pick which group(s) are
+// involved, optionally adjust type/time. This is group-first by design.
+function openQuickSchedule(d) {
+  const existing = events.find(e => sameDay(e.date, d));
+  const panel = document.getElementById('quick-schedule-panel');
+  panel.style.display = 'block';
+  const selectedGroups = existing ? existing.groups : [];
+  const type = existing ? existing.type : suggestedTypeForDate(d);
+  const time = existing ? existing.time : (d.getDay() === 6 ? '9:30 AM' : '6:00 PM');
+
+  panel.innerHTML =
+    '<div class="card-form" style="border-color:var(--accent);margin-top:12px">' +
+      '<h3>' + d.toLocaleDateString('en-CA', { weekday: 'long', month: 'long', day: 'numeric' }) + '</h3>' +
+      '<div class="form-group"><label>Which group(s)?</label><div class="checkbox-group" id="qs-groups">' +
+        (groups.length ? groups.map(g => '<label class="checkbox-item"><input type="checkbox" value="' + g.name + '"' + (selectedGroups.includes(g.name) ? ' checked' : '') + '> ' + g.name + '</label>').join('') : '<p style="font-size:12px;color:var(--text-muted)">No groups yet \u2014 create one in the Groups tab first.</p>') +
+      '</div></div>' +
+      '<div class="form-row">' +
+        '<div class="form-group"><label>Type</label><select id="qs-type">' +
+          ['rehearsal', 'performance', 'special'].map(t => '<option value="' + t + '"' + (t === type ? ' selected' : '') + '>' + { rehearsal: 'Rehearsal', performance: 'Performance', special: 'Special music' }[t] + '</option>').join('') +
+        '</select></div>' +
+        '<div class="form-group"><label>Time</label><input type="text" id="qs-time" value="' + time + '"></div>' +
+      '</div>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+        '<button class="btn btn-primary" onclick="saveQuickSchedule(\'' + dateStr(d) + '\',' + (existing ? existing.id : 'null') + ')">' + (existing ? 'Save changes' : 'Schedule it') + '</button>' +
+        (existing ? '<button class="btn btn-danger" onclick="deleteEvent(' + existing.id + ');closeQuickSchedule()">Remove this schedule</button>' : '') +
+        '<button class="btn btn-secondary" onclick="closeQuickSchedule()">Cancel</button>' +
+      '</div>' +
+    '</div>';
+  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function closeQuickSchedule() {
+  document.getElementById('quick-schedule-panel').style.display = 'none';
+  document.getElementById('quick-schedule-panel').innerHTML = '';
+}
+
+async function saveQuickSchedule(dStr, existingId) {
+  const selectedGroups = [...document.querySelectorAll('#qs-groups input:checked')].map(i => i.value);
+  const type = document.getElementById('qs-type').value;
+  const time = document.getElementById('qs-time').value || '6:00 PM';
+  if (!selectedGroups.length) { alert('Pick at least one group.'); return; }
+
+  // Build the combined assignment list from every selected group's members
+  let assignedMemberIds = [];
+  let assignedRoles = [];
+  selectedGroups.forEach(gName => {
+    const g = groups.find(x => x.name === gName);
+    if (!g) return;
+    g.members.forEach(mid => {
+      const m = members.find(x => x.id === mid);
+      assignedMemberIds.push(mid);
+      assignedRoles.push(m && m.roles[0] ? m.roles[0] : '');
+    });
+  });
+
+  const title = selectedGroups.join(', ');
+  const payload = { type, title, date: dStr, time, groupNames: selectedGroups, assignedMemberIds, assignedRoles };
+
+  const result = existingId
+    ? await callApi('updateEvent', Object.assign({ id: existingId }, payload))
+    : await callApi('addEvent', payload);
   if (result.error) { alert(result.error); return; }
-  document.getElementById('quick-event-title').value = '';
-  document.getElementById('quick-event-time').value = '';
+  closeQuickSchedule();
   await loadAllData();
   renderAdminCal();
   populateNotifyEvents();
@@ -1005,6 +1154,7 @@ async function addEventToDate(type, dateStr) {
 
 async function deleteEvent(id) {
   await callApi('deleteEvent', { id });
+  closeQuickSchedule();
   await loadAllData();
   renderAdminCal();
 }
