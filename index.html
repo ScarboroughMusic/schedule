@@ -245,11 +245,74 @@
   .notify-preview { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; font-size: 13px; color: var(--text-secondary); margin-top: 10px; line-height: 1.7; }
 
   /* RESPONSIVE */
-  @media (max-width: 700px) {
+  /* TABLET */
+  @media (max-width: 900px) {
     .schedule-builder { grid-template-columns: 1fr; }
+    .member-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+    .groups-grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+  }
+
+  /* MOBILE */
+  @media (max-width: 700px) {
+    body { font-size: 14px; }
+    .page { padding: 16px 12px; }
+    .site-header { padding: 0 12px; }
+    .header-inner { height: auto; min-height: 56px; flex-wrap: wrap; padding: 8px 0; gap: 8px; }
+    .logo-mark { width: 30px; height: 30px; }
+
+    /* Nav becomes horizontally scrollable instead of cramming */
+    .nav { width: 100%; overflow-x: auto; gap: 2px; padding-bottom: 2px; -webkit-overflow-scrolling: touch; }
+    .nav::-webkit-scrollbar { height: 0; }
+    .nav-btn { padding: 6px 10px; font-size: 13px; white-space: nowrap; flex-shrink: 0; }
+    .admin-btn { margin-left: 4px; }
+
     .form-row { grid-template-columns: 1fr; }
-    .nav-btn { padding: 6px 8px; font-size: 12px; }
-    .header-inner { gap: 8px; }
+    .month-nav { flex-wrap: wrap; gap: 8px; }
+    .month-title { font-size: 18px; flex-basis: 100%; }
+
+    /* Calendar: keep 7 columns but shrink so nothing is cut off */
+    .cal-cell { min-height: 56px; padding: 4px 3px; }
+    .cal-cell.emphasized { min-height: 72px; flex: 1.3; }
+    .cal-day-label { font-size: 9px; padding: 6px 0; }
+    .cal-day-label.emphasized { flex: 1.3; }
+    .date-num { font-size: 11px; width: 20px; height: 20px; margin-bottom: 2px; }
+    .cal-group-block { font-size: 9px; padding: 2px 4px; }
+    .cal-cell.emphasized .cal-group-block { font-size: 9px; padding: 3px 5px; }
+    .cal-group-block .grp-type { font-size: 7px; }
+
+    /* Admin tabs scroll horizontally */
+    .admin-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; }
+    .admin-tabs::-webkit-scrollbar { height: 0; }
+    .admin-tab { padding: 10px 12px; font-size: 13px; white-space: nowrap; flex-shrink: 0; }
+
+    /* Roster + groups single column */
+    .member-grid { grid-template-columns: 1fr; }
+    .groups-grid { grid-template-columns: 1fr; }
+    .upcoming-strip { grid-template-columns: 1fr; }
+
+    /* Tables scroll horizontally rather than overflow the screen */
+    .table-list { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .table-list table { min-width: 480px; }
+
+    /* Modal fills more of the screen */
+    .modal { max-width: 100%; max-height: 92vh; }
+    .modal-overlay { padding: 8px; }
+
+    /* Filter tabs wrap */
+    .filter-tabs { flex-wrap: wrap; }
+
+    /* Roster controls stack */
+    .roster-controls { flex-direction: column; align-items: stretch; }
+
+    /* Version badge smaller so it doesn't overlap content */
+    #version-badge { bottom: 6px; right: 6px; font-size: 10px; padding: 2px 6px; }
+  }
+
+  /* VERY SMALL PHONES */
+  @media (max-width: 380px) {
+    .cal-cell { min-height: 48px; padding: 3px 2px; }
+    .cal-group-block { font-size: 8px; padding: 1px 3px; }
+    .date-num { font-size: 10px; }
   }
 </style>
 </head>
@@ -572,6 +635,7 @@
     </div>
     <div class="modal-body">
       <div class="modal-meta" id="modal-meta"></div>
+      <div id="modal-admin-edit" style="margin-bottom:14px"></div>
       <div class="modal-section">
         <div class="modal-section-title">Assigned this week</div>
         <div id="modal-assignments"></div>
@@ -886,6 +950,12 @@ function showEventModal(id) {
   document.getElementById('modal-event-type').textContent = { rehearsal: 'Rehearsal', performance: 'Performance', special: 'Special music' }[e.type];
   document.getElementById('modal-event-type').style.color = { rehearsal: 'var(--accent)', performance: 'var(--teal)', special: 'var(--amber)' }[e.type];
   document.getElementById('modal-event-title').textContent = e.groups.length ? e.groups.join(' + ') : (e.title || '');
+  const editWrap = document.getElementById('modal-admin-edit');
+  if (isAdmin) {
+    editWrap.innerHTML = '<button class="btn btn-primary btn-sm" onclick="editFromModal(' + e.id + ')">✏️ Edit this schedule</button>';
+  } else {
+    editWrap.innerHTML = '';
+  }
   document.getElementById('modal-meta').innerHTML =
     '<div class="meta-item">📅 ' + e.date.toLocaleDateString('en-CA', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) + '</div>' +
     '<div class="meta-item">🕐 ' + e.time + '</div>';
@@ -912,6 +982,17 @@ function showEventModal(id) {
   document.getElementById('event-modal').classList.add('open');
 }
 function closeModal() { document.getElementById('event-modal').classList.remove('open'); }
+
+function editFromModal(eventId) {
+  const e = events.find(x => x.id === eventId);
+  if (!e) return;
+  closeModal();
+  showPage('admin', document.querySelector('.admin-btn'));
+  setTimeout(() => {
+    showAdminTab('tab-schedule', document.querySelector('.admin-tab'));
+    openQuickSchedule(e.date);
+  }, 0);
+}
 
 // ── SONGS ──────────────────────────────────────────────────
 // Open to everyone — anyone with the site link can add or remove songs
@@ -941,10 +1022,30 @@ function renderModalSongs(e) {
 function cssSafe(s) { return (s || 'none').replace(/[^a-zA-Z0-9]/g, '_'); }
 
 function songRowHtml(s) {
-  return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);font-size:13px">' +
-    '<div style="flex:1">' + s.title + (s.url ? ' — <a href="' + s.url + '" target="_blank" rel="noopener" style="color:var(--accent)">link</a>' : '') + '</div>' +
-    '<button class="btn btn-secondary btn-sm" onclick="removeSongFromModal(' + s.id + ')" style="padding:2px 8px;font-size:11px">Remove</button>' +
+  return '<div style="display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid var(--border)">' +
+    '<input type="text" id="song-title-' + s.id + '" value="' + escapeAttr(s.title) + '" style="flex:1;font-size:13px;padding:5px 8px" placeholder="Song title">' +
+    '<input type="text" id="song-url-' + s.id + '" value="' + escapeAttr(s.url || '') + '" style="flex:1;font-size:13px;padding:5px 8px" placeholder="Link (optional)">' +
+    (s.url ? '<a href="' + escapeAttr(s.url) + '" target="_blank" rel="noopener" style="color:var(--accent);font-size:12px;white-space:nowrap" title="Open link">↗</a>' : '') +
+    '<button class="btn btn-secondary btn-sm" onclick="saveSongEdit(' + s.id + ')" style="padding:3px 8px;font-size:11px">Save</button>' +
+    '<button class="btn btn-danger btn-sm" onclick="removeSongFromModal(' + s.id + ')" style="padding:3px 8px;font-size:11px">✕</button>' +
   '</div>';
+}
+
+function escapeAttr(s) {
+  return String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+async function saveSongEdit(songId) {
+  const song = songs.find(s => s.id === songId);
+  if (!song) return;
+  const title = document.getElementById('song-title-' + songId).value.trim();
+  const url = document.getElementById('song-url-' + songId).value.trim();
+  if (!title) { alert('Song title cannot be blank.'); return; }
+  const result = await callApi('updateSong', { id: songId, eventId: song.eventId, groupName: song.groupName, title, url });
+  if (result.error) { alert(result.error); return; }
+  await loadAllData();
+  const e = events.find(x => x.id === song.eventId);
+  if (e) renderModalSongs(e);
 }
 
 async function addSongFromModal(eventId, groupName) {
@@ -1215,11 +1316,12 @@ function openQuickSchedule(d) {
   panel.style.display = 'block';
   const selectedGroups = existing ? existing.groups : [];
   const type = existing ? existing.type : suggestedTypeForDate(d);
-  const time = existing ? existing.time : (d.getDay() === 6 ? '10:00 AM' : '7:30 PM');
+  const time = existing ? existing.time : (d.getDay() === 6 ? '9:30 AM' : '6:00 PM');
 
   panel.innerHTML =
     '<div class="card-form" style="border-color:var(--accent);margin-top:12px">' +
-      '<h3>' + d.toLocaleDateString('en-CA', { weekday: 'long', month: 'long', day: 'numeric' }) + '</h3>' +
+      '<h3>' + (existing ? 'Edit schedule' : 'New schedule') + '</h3>' +
+      '<div class="form-group"><label>Date</label><input type="date" id="qs-date" value="' + dateStr(d) + '"></div>' +
       '<div class="form-group"><label>Which group(s)?</label><div class="checkbox-group" id="qs-groups">' +
         (groups.length ? groups.map(g => '<label class="checkbox-item"><input type="checkbox" value="' + g.name + '"' + (selectedGroups.includes(g.name) ? ' checked' : '') + '> ' + g.name + '</label>').join('') : '<p style="font-size:12px;color:var(--text-muted)">No groups yet \u2014 create one in the Groups tab first.</p>') +
       '</div></div>' +
@@ -1230,7 +1332,7 @@ function openQuickSchedule(d) {
         '<div class="form-group"><label>Time</label><input type="text" id="qs-time" value="' + time + '"></div>' +
       '</div>' +
       '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
-        '<button class="btn btn-primary" onclick="saveQuickSchedule(' + "'" + dateStr(d) + "'" + ',' + (existing ? existing.id : 'null') + ')">' + (existing ? 'Save changes' : 'Schedule it') + '</button>' +
+        '<button class="btn btn-primary" onclick="saveQuickSchedule(' + (existing ? existing.id : 'null') + ')">' + (existing ? 'Save changes' : 'Schedule it') + '</button>' +
         (existing ? '<button class="btn btn-danger" onclick="deleteEvent(' + existing.id + ');closeQuickSchedule()">Remove this schedule</button>' : '') +
         '<button class="btn btn-secondary" onclick="closeQuickSchedule()">Cancel</button>' +
       '</div>' +
@@ -1243,10 +1345,12 @@ function closeQuickSchedule() {
   document.getElementById('quick-schedule-panel').innerHTML = '';
 }
 
-async function saveQuickSchedule(dStr, existingId) {
+async function saveQuickSchedule(existingId) {
+  const dStr = document.getElementById('qs-date').value;
+  if (!dStr) { alert('Pick a date.'); return; }
   const selectedGroups = [...document.querySelectorAll('#qs-groups input:checked')].map(i => i.value);
   const type = document.getElementById('qs-type').value;
-  const time = document.getElementById('qs-time').value || '7:30 PM';
+  const time = document.getElementById('qs-time').value || '6:00 PM';
   if (!selectedGroups.length) { alert('Pick at least one group.'); return; }
 
   // Build the combined assignment list from every selected group's members
@@ -1535,7 +1639,7 @@ window.addEventListener('load', () => {
   else setTimeout(initGoogleSignIn, 500);
 });
 </script>
-<div id="version-badge" style="position:fixed;bottom:10px;right:12px;font-size:11px;color:var(--text-muted);background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:3px 8px;z-index:500;font-family:monospace;pointer-events:none">v2.2</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:12px;font-size:11px;color:var(--text-muted);background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:3px 8px;z-index:500;font-family:monospace;pointer-events:none">v2.3</div>
 
 </body>
 </html>
