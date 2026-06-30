@@ -1213,7 +1213,7 @@ function openQuickSchedule(d) {
         '<div class="form-group"><label>Time</label><input type="text" id="qs-time" value="' + time + '"></div>' +
       '</div>' +
       '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
-        '<button class="btn btn-primary" onclick="saveQuickSchedule(\'' + dateStr(d) + '\',' + (existing ? existing.id : 'null') + ')">' + (existing ? 'Save changes' : 'Schedule it') + '</button>' +
+        '<button class="btn btn-primary" onclick="saveQuickSchedule(' + "'" + dateStr(d) + "'" + ',' + (existing ? existing.id : 'null') + ')">' + (existing ? 'Save changes' : 'Schedule it') + '</button>' +
         (existing ? '<button class="btn btn-danger" onclick="deleteEvent(' + existing.id + ');closeQuickSchedule()">Remove this schedule</button>' : '') +
         '<button class="btn btn-secondary" onclick="closeQuickSchedule()">Cancel</button>' +
       '</div>' +
