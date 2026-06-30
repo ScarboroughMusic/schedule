@@ -659,6 +659,17 @@ async function loadAllData() {
       assignedRoles: String(e.Roles || '').split(',').filter(Boolean)
     }));
 
+    // TEMP DIAGNOSTIC v2.1 — remove once scheduling confirmed working
+    if (data.events && data.events.length) {
+      const raw = data.events[0];
+      const parsed = parseSheetDate(raw.Date);
+      window._diag = 'RAW DATE: ' + JSON.stringify(raw.Date) + ' | PARSED: ' + parsed.toString() + ' | TODAY: ' + today.toString() + ' | events count: ' + events.length;
+      console.log(window._diag);
+    } else {
+      window._diag = 'No events returned from backend. events.length=' + events.length;
+      console.log(window._diag);
+    }
+
     roles = (data.roles || []).map(r => ({ id: r.ID, name: r.Name }));
 
     songs = (data.songs || []).map(s => ({
@@ -859,7 +870,11 @@ function renderUpcoming() {
   const strip = document.getElementById('upcoming-strip');
   const upcoming = events.filter(e => e.date >= new Date(today.getFullYear(), today.getMonth(), today.getDate())).sort((a, b) => a.date - b.date).slice(0, 3);
   if (upcoming.length === 0) {
-    strip.innerHTML = '<p style="font-size:13px;color:var(--text-muted)">No upcoming events scheduled yet.</p>';
+    let diagBox = '';
+    if (window._diag) {
+      diagBox = '<div style="font-size:11px;color:var(--text-muted);background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:10px;margin-top:8px;font-family:monospace;word-break:break-all">DIAGNOSTIC (temporary): ' + window._diag + '</div>';
+    }
+    strip.innerHTML = '<p style="font-size:13px;color:var(--text-muted)">No upcoming events scheduled yet.</p>' + diagBox;
     return;
   }
   strip.innerHTML = upcoming.map(e => '<div class="upcoming-card" onclick="showEventModal(' + e.id + ')">' +
@@ -1535,7 +1550,7 @@ window.addEventListener('load', () => {
   else setTimeout(initGoogleSignIn, 500);
 });
 </script>
-<div id="version-badge" style="position:fixed;bottom:10px;right:12px;font-size:11px;color:var(--text-muted);background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:3px 8px;z-index:500;font-family:monospace;pointer-events:none">v2.1</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:12px;font-size:11px;color:var(--text-muted);background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:3px 8px;z-index:500;font-family:monospace;pointer-events:none">v2.2-diag</div>
 
 </body>
 </html>
