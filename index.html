@@ -898,10 +898,10 @@ function renderAdminCal() {
     const isTod = sameDay(d, today);
     const dateStr = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
     html += '<div class="mini-cal-cell' + (other ? ' other' : '') + (isTod ? ' today' : '') + '"' +
-      ' ondragover="event.preventDefault();this.classList.add(\\'drop-target\\')"' +
-      ' ondragleave="this.classList.remove(\\'drop-target\\')"' +
-      ' ondrop="dropEvent(event,\\'' + dateStr + '\\')"' +
-      ' onclick="clickAddEvent(\\'' + dateStr + '\\')">' +
+      ' ondragover="event.preventDefault();this.classList.add(\'drop-target\')"' +
+      ' ondragleave="this.classList.remove(\'drop-target\')"' +
+      ' ondrop="dropEvent(event,\'' + dateStr + '\')"' +
+      ' onclick="clickAddEvent(\'' + dateStr + '\')">' +
       '<div class="dn">' + d.getDate() + '</div>' +
       evs.map(e => '<div class="ev-dot ' + e.type + '"></div>').join('') +
     '</div>';
