@@ -1215,7 +1215,7 @@ function openQuickSchedule(d) {
   panel.style.display = 'block';
   const selectedGroups = existing ? existing.groups : [];
   const type = existing ? existing.type : suggestedTypeForDate(d);
-  const time = existing ? existing.time : (d.getDay() === 6 ? '9:30 AM' : '6:00 PM');
+  const time = existing ? existing.time : (d.getDay() === 6 ? '10:00 AM' : '7:30 PM');
 
   panel.innerHTML =
     '<div class="card-form" style="border-color:var(--accent);margin-top:12px">' +
@@ -1246,7 +1246,7 @@ function closeQuickSchedule() {
 async function saveQuickSchedule(dStr, existingId) {
   const selectedGroups = [...document.querySelectorAll('#qs-groups input:checked')].map(i => i.value);
   const type = document.getElementById('qs-type').value;
-  const time = document.getElementById('qs-time').value || '6:00 PM';
+  const time = document.getElementById('qs-time').value || '7:30 PM';
   if (!selectedGroups.length) { alert('Pick at least one group.'); return; }
 
   // Build the combined assignment list from every selected group's members
