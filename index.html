@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Scarborough SDA Music Department</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   :root {
     --bg: #f8f7f4;
@@ -254,6 +255,7 @@
       <button class="nav-btn active" onclick="showPage('schedule')">Schedule</button>
       <button class="nav-btn" onclick="showPage('roster')">Roster</button>
       <button class="nav-btn" onclick="showPage('groups')">Groups</button>
+      <button class="nav-btn" onclick="showPage('join')">Join the list</button>
       <button class="nav-btn admin-btn" onclick="showPage('admin')">Admin</button>
     </nav>
   </div>
@@ -303,19 +305,52 @@
   <div class="groups-grid" id="groups-grid"></div>
 </div>
 
+<!-- JOIN THE LIST PAGE (public self-signup) -->
+<div class="page" id="page-join">
+  <div style="max-width:480px">
+    <h2 style="font-size:20px;font-weight:600;margin-bottom:6px">Join the notification list</h2>
+    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:20px">Add your email so you get reminders before rehearsals and performances you're part of. Already on the list? Submit again to update your roles or reminder timing.</p>
+    <div class="card-form">
+      <div class="form-row">
+        <div class="form-group"><label>First name</label><input type="text" id="join-first" placeholder="First name"></div>
+        <div class="form-group"><label>Last name</label><input type="text" id="join-last" placeholder="Last name"></div>
+      </div>
+      <div class="form-group"><label>Email</label><input type="email" id="join-email" placeholder="email@example.com"></div>
+      <div class="form-group">
+        <label>What do you take part in?</label>
+        <div class="checkbox-group" id="join-roles-check">
+          <label class="checkbox-item"><input type="checkbox" value="Band"> Band</label>
+          <label class="checkbox-item"><input type="checkbox" value="Choir"> Choir</label>
+          <label class="checkbox-item"><input type="checkbox" value="AV"> AV Team</label>
+          <label class="checkbox-item"><input type="checkbox" value="Special"> Special music</label>
+          <label class="checkbox-item"><input type="checkbox" value="Guest"> Guest musician</label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Remind me</label>
+        <select id="join-reminder">
+          <option value="1">1 day before</option>
+          <option value="2" selected>2 days before</option>
+          <option value="3">3 days before</option>
+          <option value="7">1 week before</option>
+        </select>
+      </div>
+      <button class="btn btn-primary btn-full" onclick="submitSignup()">Save my preferences</button>
+      <div id="join-success" style="display:none;font-size:13px;color:var(--teal);background:var(--teal-light);border-radius:6px;padding:8px 12px;margin-top:10px">You're on the list. We'll email you ahead of your scheduled events.</div>
+      <div id="join-error" style="display:none;font-size:13px;color:#b91c1c;background:#fce8e8;border-radius:6px;padding:8px 12px;margin-top:10px">Please enter your name and email.</div>
+    </div>
+  </div>
+</div>
+
 <!-- ADMIN PAGE -->
 <div class="page" id="page-admin">
   <div id="admin-login-wrap">
     <div class="admin-login">
       <h2>Admin access</h2>
-      <p>Sign in to manage the schedule, roster, and groups.</p>
-      <div class="form-group">
-        <label>Password</label>
-        <input type="password" id="admin-pw" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')tryLogin()">
-      </div>
-      <button class="btn btn-primary btn-full" onclick="tryLogin()">Sign in</button>
-      <div class="error-msg" id="login-error">Incorrect password. Try again.</div>
-      <p style="font-size:12px;color:var(--text-muted);margin-top:14px;">Default password: <strong>music2024</strong> — change this in the setup guide.</p>
+      <p>Sign in with the Google account approved for admin access.</p>
+      <div id="g_id_signin_container" style="display:flex;justify-content:center;margin-top:8px"></div>
+      <div class="error-msg" id="login-error">That Google account isn't on the admin list. Ask an existing admin to add your email to the "Admins" tab in the Google Sheet.</div>
+      <p style="font-size:12px;color:var(--text-muted);margin-top:14px;">Admin accounts are managed in the Admins tab of the Google Sheet, not in this file.</p>
     </div>
   </div>
 
@@ -466,58 +501,59 @@
     <!-- SETUP GUIDE -->
     <div class="admin-section" id="tab-setup">
       <div class="card-form">
-        <h3>🚀 Getting started: 3-step setup</h3>
+        <h3>🚀 Getting started: setup steps</h3>
         <div style="display:flex;flex-direction:column;gap:20px;margin-top:4px">
           <div style="display:flex;gap:12px">
             <div style="width:28px;height:28px;background:var(--accent);color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0">1</div>
             <div>
               <div style="font-weight:600;margin-bottom:4px">Create your Google Sheet</div>
-              <p style="font-size:13px;color:var(--text-secondary)">Go to sheets.google.com and create a new spreadsheet called "Scarborough SDA Music". Make 3 tabs: <strong>Members</strong>, <strong>Events</strong>, and <strong>Groups</strong>. This is your live database.</p>
+              <p style="font-size:13px;color:var(--text-secondary)">Sign in as scarboroughsdamusicdepartment@gmail.com, go to sheets.google.com, create a new spreadsheet. Add 4 tabs named exactly: <strong>Members</strong>, <strong>Groups</strong>, <strong>Events</strong>, <strong>Admins</strong>. Column headers are listed at the top of AppsScript_Code.gs in this repo.</p>
             </div>
           </div>
           <div style="display:flex;gap:12px">
-            <div style="width:28px;height:28px;background:var(--accent);color:white;border-radius:50%;display:flex;align-items:center;justify-content:function14px;flex-shrink:0;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center">2</div>
+            <div style="width:28px;height:28px;background:var(--accent);color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0">2</div>
             <div>
-              <div style="font-weight:600;margin-bottom:4px">Connect via Apps Script</div>
-              <p style="font-size:13px;color:var(--text-secondary)">In your Sheet, go to Extensions → Apps Script. Paste the script from the README in your GitHub repo. Deploy it as a Web App (Anyone can access). Copy the Web App URL and paste it into the <code style="background:var(--surface-2);padding:1px 5px;border-radius:4px;font-size:12px">DATA_URL</code> constant at the top of this HTML file.</p>
+              <div style="font-weight:600;margin-bottom:4px">Add yourself to the Admins tab</div>
+              <p style="font-size:13px;color:var(--text-secondary)">Put <code style="background:var(--surface-2);padding:1px 5px;border-radius:4px;font-size:12px">Email</code> in cell A1 of the Admins tab, then list every Gmail address that should have admin access in column A below it. Only emails on this list can sign in to this admin panel.</p>
             </div>
           </div>
           <div style="display:flex;gap:12px">
             <div style="width:28px;height:28px;background:var(--accent);color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0">3</div>
             <div>
-              <div style="font-weight:600;margin-bottom:4px">Change your admin password</div>
-              <p style="font-size:13px;color:var(--text-secondary)">Find <code style="background:var(--surface-2);padding:1px 5px;border-radius:4px;font-size:12px">const ADMIN_PW = 'music2024'</code> near the top of this HTML file and change it to something only you know. Then push to GitHub.</p>
+              <div style="font-weight:600;margin-bottom:4px">Deploy the Apps Script</div>
+              <p style="font-size:13px;color:var(--text-secondary)">In the Sheet, go to Extensions → Apps Script. Delete the starter code and paste in the full contents of AppsScript_Code.gs from this repo. Click Deploy → New deployment → type "Web app" → Execute as "Me" → Who has access "Anyone" → Deploy. Copy the Web App URL it gives you.</p>
+            </div>
+          </div>
+          <div style="display:flex;gap:12px">
+            <div style="width:28px;height:28px;background:var(--accent);color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0">4</div>
+            <div>
+              <div style="font-weight:600;margin-bottom:4px">Connect the website to your Sheet</div>
+              <p style="font-size:13px;color:var(--text-secondary)">In index.html, find <code style="background:var(--surface-2);padding:1px 5px;border-radius:4px;font-size:12px">const DATA_URL</code> near the top of the script and paste your Web App URL in. Commit the change to GitHub.</p>
+            </div>
+          </div>
+          <div style="display:flex;gap:12px">
+            <div style="width:28px;height:28px;background:var(--accent);color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0">5</div>
+            <div>
+              <div style="font-weight:600;margin-bottom:4px">Set up Google sign-in</div>
+              <p style="font-size:13px;color:var(--text-secondary)">Go to console.cloud.google.com, create a project, create an OAuth Client ID (type: Web application), and add your GitHub Pages URL as an authorized JavaScript origin. Paste the Client ID into <code style="background:var(--surface-2);padding:1px 5px;border-radius:4px;font-size:12px">const GOOGLE_CLIENT_ID</code> in index.html.</p>
+            </div>
+          </div>
+          <div style="display:flex;gap:12px">
+            <div style="width:28px;height:28px;background:var(--accent);color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0">6</div>
+            <div>
+              <div style="font-weight:600;margin-bottom:4px">Turn on daily reminder emails</div>
+              <p style="font-size:13px;color:var(--text-secondary)">In the Apps Script editor, select <code style="background:var(--surface-2);padding:1px 5px;border-radius:4px;font-size:12px">setupDailyTrigger</code> from the function dropdown, click Run once. This schedules a daily 8am check that emails anyone whose chosen reminder window matches an upcoming event.</p>
             </div>
           </div>
         </div>
       </div>
       <div class="card-form">
-        <h3>📧 Email notifications via Google Apps Script</h3>
-        <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px">Paste this into your Apps Script editor. It lets this site send email reminders through your Google account — completely free.</p>
-        <pre style="background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:14px;font-size:11px;overflow-x:auto;line-height:1.6;color:var(--text)">function doPost(e) {
-  const data = JSON.parse(e.postData.contents);
-  if (data.action === 'sendReminder') {
-    data.emails.forEach(email => {
-      MailApp.sendEmail({
-        to: email,
-        subject: data.subject,
-        body: data.body
-      });
-    });
-    return ContentService.createTextOutput('ok');
-  }
-}
-
-function doGet(e) {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet();
-  const action = e.parameter.action;
-  if (action === 'getMembers') {
-    const rows = sheet.getSheetByName('Members').getDataRange().getValues();
-    return ContentService.createTextOutput(JSON.stringify(rows))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
-  // Add getEvents, getGroups similarly
-}</pre>
+        <h3>📁 Where things live</h3>
+        <p style="font-size:13px;color:var(--text-secondary);line-height:1.7">
+          <strong>index.html</strong> — the website, in your GitHub repo.<br>
+          <strong>AppsScript_Code.gs</strong> — the backend logic, lives inside your Google Sheet's Apps Script editor.<br>
+          <strong>The Google Sheet</strong> — your real database. Members, Groups, Events, and the Admins list all live here as plain rows you can edit directly if needed.
+        </p>
       </div>
     </div>
   </div>
@@ -544,383 +580,492 @@ function doGet(e) {
 </div>
 
 <script>
-const ADMIN_PW = 'music2024';
+// ───────────────────────────────────────────────────────────
+// CONFIG — fill these in once your backend is deployed.
+// See the Setup guide tab in Admin for step by step instructions.
+const DATA_URL = 'PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE';
+const GOOGLE_CLIENT_ID = 'PASTE_YOUR_GOOGLE_OAUTH_CLIENT_ID_HERE';
+// ───────────────────────────────────────────────────────────
 
-// ── SAMPLE DATA ──────────────────────────────────────────
-let members = [
-  {id:1,first:'Marcus',last:'Campbell',email:'marcus@example.com',roles:['Band','Lead'],groups:['Week 2 Band'],color:'blue'},
-  {id:2,first:'Diane',last:'Forbes',email:'diane@example.com',roles:['Choir'],groups:['Sunday Choir'],color:'teal'},
-  {id:3,first:'Kevin',last:'Thompson',email:'kevin@example.com',roles:['Band','Choir'],groups:['Week 4 Band','Sunday Choir'],color:'amber'},
-  {id:4,first:'Sandra',last:'Reid',email:'sandra@example.com',roles:['AV'],groups:[],color:'purple'},
-  {id:5,first:'Jerome',last:'Williams',email:'jerome@example.com',roles:['Band'],groups:['Week 2 Band','Week 4 Band'],color:'rose'},
-  {id:6,first:'Yvette',last:'Clarke',email:'yvette@example.com',roles:['Special','Lead'],groups:['Special Music'],color:'teal'},
-  {id:7,first:'Devon',last:'Morgan',email:'devon@example.com',roles:['Band'],groups:['Week 4 Band'],color:'blue'},
-  {id:8,first:'Patricia',last:'James',email:'patricia@example.com',roles:['Choir'],groups:['Sunday Choir'],color:'amber'},
-];
-
-let groups = [
-  {id:1,name:'Week 2 Band',type:'Band',members:[1,3,5]},
-  {id:2,name:'Week 4 Band',type:'Band',members:[5,7,3]},
-  {id:3,name:'Sunday Choir',type:'Choir',members:[2,3,8]},
-  {id:4,name:'Special Music',type:'Special',members:[6]},
-  {id:5,name:'AV Team',type:'AV',members:[4]},
-];
+let members = [];
+let groups = [];
+let events = [];
+let isAdmin = false;
+let adminEmail = null;
 
 const today = new Date();
 let viewMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-
-let events = [
-  {id:1,type:'rehearsal',title:'Week 2 Band Rehearsal',date:new Date(today.getFullYear(),today.getMonth(),getNextDay(today,3)),time:'6:00 PM',groups:['Week 2 Band'],assignments:[{memberId:1,role:'Lead'},{memberId:5,role:'Guitarist'}]},
-  {id:2,type:'performance',title:'Sunday Morning Service',date:new Date(today.getFullYear(),today.getMonth(),getNextDay(today,0)),time:'9:30 AM',groups:['Week 2 Band','Sunday Choir'],assignments:[{memberId:1,role:'Lead'},{memberId:2,role:'Choir'},{memberId:3,role:'Keyboard'}]},
-  {id:3,type:'rehearsal',title:'Week 4 Band Rehearsal',date:new Date(today.getFullYear(),today.getMonth(),getNextDay(today,3)+14),time:'6:00 PM',groups:['Week 4 Band'],assignments:[{memberId:7,role:'Lead'},{memberId:5,role:'Bass'}]},
-  {id:4,type:'special',title:'Special Music — Youth Sunday',date:new Date(today.getFullYear(),today.getMonth(),getNextDay(today,0)+14),time:'9:30 AM',groups:['Special Music'],assignments:[{memberId:6,role:'Vocalist'}]},
-];
-
+let adminViewMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 let dragType = null;
-let clickedDate = null;
 let activeFilter = 'all';
+const colorCycle = ['blue','teal','amber','rose','purple'];
 
-function getNextDay(from, dow) {
-  const d = new Date(from);
-  const diff = (dow - d.getDay() + 7) % 7 || 7;
-  return d.getDate() + diff;
+// ── DATA LOADING ──────────────────────────────────────────
+
+async function loadAllData() {
+  if (DATA_URL.indexOf('PASTE_YOUR') === 0) {
+    showConfigWarning();
+    return;
+  }
+  try {
+    const res = await fetch(DATA_URL + '?action=getAll');
+    const data = await res.json();
+    if (data.error) { console.error(data.error); return; }
+
+    members = (data.members || []).map((m, i) => ({
+      id: m.ID,
+      first: m.First,
+      last: m.Last,
+      email: m.Email,
+      roles: String(m.Roles || '').split(',').filter(Boolean),
+      groups: String(m.Groups || '').split(',').filter(Boolean),
+      reminderDays: m.ReminderDays || 2,
+      color: colorCycle[i % colorCycle.length]
+    }));
+
+    groups = (data.groups || []).map(g => ({
+      id: g.ID,
+      name: g.Name,
+      type: g.Type,
+      members: String(g.MemberIDs || '').split(',').filter(Boolean).map(Number)
+    }));
+
+    events = (data.events || []).map(e => ({
+      id: e.ID,
+      type: e.Type,
+      title: e.Title,
+      date: new Date(e.Date + 'T12:00:00'),
+      time: e.Time,
+      groups: String(e.GroupNames || '').split(',').filter(Boolean),
+      assignedIds: String(e.AssignedMemberIDs || '').split(',').filter(Boolean).map(Number),
+      assignedRoles: String(e.Roles || '').split(',').filter(Boolean)
+    }));
+
+    renderCalendar();
+    if (document.getElementById('page-roster').classList.contains('active')) renderRoster();
+    if (document.getElementById('page-groups').classList.contains('active')) renderGroups();
+  } catch (err) {
+    console.error('Failed to load data:', err);
+    showConfigWarning();
+  }
+}
+
+function showConfigWarning() {
+  document.getElementById('upcoming-strip').innerHTML =
+    '<div style="padding:16px;background:var(--amber-light);border-radius:12px;color:var(--amber);font-size:13px;grid-column:1/-1">' +
+    'This site isn\'t connected to a Google Sheet yet. Go to Admin → Setup guide to finish setup.</div>';
+}
+
+async function callApi(action, payload) {
+  const res = await fetch(DATA_URL, {
+    method: 'POST',
+    body: JSON.stringify(Object.assign({ action: action }, payload))
+  });
+  return res.json();
+}
+
+function sameDay(a, b) {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
 // ── NAVIGATION ────────────────────────────────────────────
 function showPage(name) {
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('page-'+name).classList.add('active');
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
   event.currentTarget.classList.add('active');
-  if(name==='schedule') renderCalendar();
-  if(name==='roster') renderRoster();
-  if(name==='groups') renderGroups();
-  if(name==='admin') renderAdminCal();
+  if (name === 'schedule') renderCalendar();
+  if (name === 'roster') renderRoster();
+  if (name === 'groups') renderGroups();
+  if (name === 'admin' && isAdmin) renderAdminCal();
 }
 
-// ── CALENDAR ─────────────────────────────────────────────
+// ── CALENDAR (PUBLIC) ─────────────────────────────────────
 function renderCalendar() {
   renderUpcoming();
-  const monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
-  document.getElementById('month-title').textContent=monthNames[viewMonth.getMonth()]+' '+viewMonth.getFullYear();
-  const body=document.getElementById('cal-body');
-  body.innerHTML='';
-  const first=new Date(viewMonth.getFullYear(),viewMonth.getMonth(),1);
-  const last=new Date(viewMonth.getFullYear(),viewMonth.getMonth()+1,0);
-  let cells=[];
-  for(let i=0;i<first.getDay();i++) cells.push({d:new Date(viewMonth.getFullYear(),viewMonth.getMonth(),-(first.getDay()-1-i)),other:true});
-  for(let d=1;d<=last.getDate();d++) cells.push({d:new Date(viewMonth.getFullYear(),viewMonth.getMonth(),d),other:false});
-  while(cells.length%7!==0) cells.push({d:new Date(viewMonth.getFullYear(),viewMonth.getMonth()+1,cells.length-last.getDate()-first.getDay()+1),other:true});
-  cells.forEach(({d,other})=>{
-    const cell=document.createElement('div');
-    cell.className='cal-cell'+(other?' other-month':'')+(sameDay(d,today)?' today':'');
-    const evs=events.filter(e=>sameDay(e.date,d));
-    let html=`<div class="date-num">${d.getDate()}</div>`;
-    evs.forEach(e=>{html+=`<div class="cal-event ${e.type}" onclick="showEventModal(${e.id});event.stopPropagation()">${e.title}</div>`;});
-    cell.innerHTML=html;
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('month-title').textContent = monthNames[viewMonth.getMonth()] + ' ' + viewMonth.getFullYear();
+  const body = document.getElementById('cal-body');
+  body.innerHTML = '';
+  const first = new Date(viewMonth.getFullYear(), viewMonth.getMonth(), 1);
+  const last = new Date(viewMonth.getFullYear(), viewMonth.getMonth() + 1, 0);
+  let cells = [];
+  for (let i = 0; i < first.getDay(); i++) cells.push({ d: new Date(viewMonth.getFullYear(), viewMonth.getMonth(), -(first.getDay() - 1 - i)), other: true });
+  for (let d = 1; d <= last.getDate(); d++) cells.push({ d: new Date(viewMonth.getFullYear(), viewMonth.getMonth(), d), other: false });
+  while (cells.length % 7 !== 0) cells.push({ d: new Date(viewMonth.getFullYear(), viewMonth.getMonth() + 1, cells.length - last.getDate() - first.getDay() + 1), other: true });
+  cells.forEach(({ d, other }) => {
+    const cell = document.createElement('div');
+    cell.className = 'cal-cell' + (other ? ' other-month' : '') + (sameDay(d, today) ? ' today' : '');
+    const evs = events.filter(e => sameDay(e.date, d));
+    let html = '<div class="date-num">' + d.getDate() + '</div>';
+    evs.forEach(e => { html += '<div class="cal-event ' + e.type + '" onclick="showEventModal(' + e.id + ');event.stopPropagation()">' + e.title + '</div>'; });
+    cell.innerHTML = html;
     body.appendChild(cell);
   });
 }
 
 function renderUpcoming() {
-  const strip=document.getElementById('upcoming-strip');
-  const upcoming=events.filter(e=>e.date>=new Date(today.getFullYear(),today.getMonth(),today.getDate())).sort((a,b)=>a.date-b.date).slice(0,3);
-  strip.innerHTML=upcoming.map(e=>`
-    <div class="upcoming-card" onclick="showEventModal(${e.id})">
-      <div class="event-type ${e.type}">${{rehearsal:'Rehearsal',performance:'Performance',special:'Special music'}[e.type]}</div>
-      <div class="event-date">${e.date.toLocaleDateString('en-CA',{weekday:'short',month:'short',day:'numeric'})}</div>
-      <div class="event-time">${e.time}</div>
-      <div class="event-groups">${e.groups.map(g=>`<span class="tag ${groupTagClass(g)}">${g}</span>`).join('')}</div>
-    </div>`).join('');
+  const strip = document.getElementById('upcoming-strip');
+  const upcoming = events.filter(e => e.date >= new Date(today.getFullYear(), today.getMonth(), today.getDate())).sort((a, b) => a.date - b.date).slice(0, 3);
+  if (upcoming.length === 0) {
+    strip.innerHTML = '<p style="font-size:13px;color:var(--text-muted)">No upcoming events scheduled yet.</p>';
+    return;
+  }
+  strip.innerHTML = upcoming.map(e => '<div class="upcoming-card" onclick="showEventModal(' + e.id + ')">' +
+    '<div class="event-type ' + e.type + '">' + { rehearsal: 'Rehearsal', performance: 'Performance', special: 'Special music' }[e.type] + '</div>' +
+    '<div class="event-date">' + e.date.toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' }) + '</div>' +
+    '<div class="event-time">' + e.time + '</div>' +
+    '<div class="event-groups">' + e.groups.map(g => '<span class="tag ' + groupTagClass(g) + '">' + g + '</span>').join('') + '</div>' +
+  '</div>').join('');
 }
 
 function groupTagClass(name) {
-  const g=groups.find(x=>x.name===name);
-  if(!g) return 'band';
-  return {Band:'band',Choir:'choir',AV:'av',Special:'special'}[g.type]||'band';
+  const g = groups.find(x => x.name === name);
+  if (!g) return 'band';
+  return { Band: 'band', Choir: 'choir', AV: 'av', Special: 'special' }[g.type] || 'band';
 }
 
-function sameDay(a,b){return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();}
-function changeMonth(d){viewMonth=new Date(viewMonth.getFullYear(),viewMonth.getMonth()+d,1);renderCalendar();}
-function goToday(){viewMonth=new Date(today.getFullYear(),today.getMonth(),1);renderCalendar();}
+function changeMonth(d) { viewMonth = new Date(viewMonth.getFullYear(), viewMonth.getMonth() + d, 1); renderCalendar(); }
+function goToday() { viewMonth = new Date(today.getFullYear(), today.getMonth(), 1); renderCalendar(); }
 
 // ── EVENT MODAL ───────────────────────────────────────────
 function showEventModal(id) {
-  const e=events.find(x=>x.id===id);
-  if(!e) return;
-  document.getElementById('modal-event-type').textContent={rehearsal:'Rehearsal',performance:'Performance',special:'Special music'}[e.type];
-  document.getElementById('modal-event-type').style.color={rehearsal:'var(--accent)',performance:'var(--teal)',special:'var(--amber)'}[e.type];
-  document.getElementById('modal-event-title').textContent=e.title;
-  document.getElementById('modal-meta').innerHTML=`
-    <div class="meta-item">📅 ${e.date.toLocaleDateString('en-CA',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}</div>
-    <div class="meta-item">🕐 ${e.time}</div>`;
-  const assigns=document.getElementById('modal-assignments');
-  assigns.innerHTML=e.assignments.map(a=>{
-    const m=members.find(x=>x.id===a.memberId);
-    return m?`<div class="assignment-row"><div class="mini-avatar av-${m.color}">${m.first[0]}${m.last[0]}</div><div class="assignment-name">${m.first} ${m.last}</div><div class="assignment-role">${a.role}</div></div>`:'';
-  }).join('');
+  const e = events.find(x => x.id === id);
+  if (!e) return;
+  document.getElementById('modal-event-type').textContent = { rehearsal: 'Rehearsal', performance: 'Performance', special: 'Special music' }[e.type];
+  document.getElementById('modal-event-type').style.color = { rehearsal: 'var(--accent)', performance: 'var(--teal)', special: 'var(--amber)' }[e.type];
+  document.getElementById('modal-event-title').textContent = e.title;
+  document.getElementById('modal-meta').innerHTML =
+    '<div class="meta-item">📅 ' + e.date.toLocaleDateString('en-CA', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) + '</div>' +
+    '<div class="meta-item">🕐 ' + e.time + '</div>';
+  const assigns = document.getElementById('modal-assignments');
+  assigns.innerHTML = e.assignedIds.map((mid, i) => {
+    const m = members.find(x => x.id === mid);
+    const role = e.assignedRoles[i] || '';
+    return m ? '<div class="assignment-row"><div class="mini-avatar av-' + m.color + '">' + m.first[0] + m.last[0] + '</div><div class="assignment-name">' + m.first + ' ' + m.last + '</div><div class="assignment-role">' + role + '</div></div>' : '';
+  }).join('') || '<p style="font-size:13px;color:var(--text-muted)">No one assigned yet.</p>';
   document.getElementById('event-modal').classList.add('open');
 }
-function closeModal(){document.getElementById('event-modal').classList.remove('open');}
+function closeModal() { document.getElementById('event-modal').classList.remove('open'); }
 
 // ── ROSTER ───────────────────────────────────────────────
 function renderRoster() {
-  const query=(document.getElementById('roster-search')||{value:''}).value.toLowerCase();
-  const filtered=members.filter(m=>{
-    const matchSearch=!query||(m.first+' '+m.last).toLowerCase().includes(query)||m.email.toLowerCase().includes(query);
-    const matchFilter=activeFilter==='all'||m.roles.includes(activeFilter);
-    return matchSearch&&matchFilter;
+  const query = (document.getElementById('roster-search') || { value: '' }).value.toLowerCase();
+  const filtered = members.filter(m => {
+    const matchSearch = !query || (m.first + ' ' + m.last).toLowerCase().includes(query) || m.email.toLowerCase().includes(query);
+    const matchFilter = activeFilter === 'all' || m.roles.includes(activeFilter);
+    return matchSearch && matchFilter;
   });
-  document.getElementById('member-grid').innerHTML=filtered.map(m=>`
-    <div class="member-card">
-      <div class="avatar av-${m.color}">${m.first[0]}${m.last[0]}</div>
-      <div class="member-info">
-        <div class="member-name">${m.first} ${m.last}</div>
-        <div class="member-email">${m.email}</div>
-        <div class="member-tags">
-          ${m.roles.map(r=>`<span class="tag ${roleCls(r)}">${r}</span>`).join('')}
-          ${m.groups.map(g=>`<span class="tag" style="background:var(--surface-2);color:var(--text-secondary)">${g}</span>`).join('')}
-        </div>
-      </div>
-    </div>`).join('');
+  document.getElementById('member-grid').innerHTML = filtered.map(m => '<div class="member-card">' +
+    '<div class="avatar av-' + m.color + '">' + m.first[0] + m.last[0] + '</div>' +
+    '<div class="member-info">' +
+      '<div class="member-name">' + m.first + ' ' + m.last + '</div>' +
+      '<div class="member-email">' + m.email + '</div>' +
+      '<div class="member-tags">' +
+        m.roles.map(r => '<span class="tag ' + roleCls(r) + '">' + r + '</span>').join('') +
+        m.groups.map(g => '<span class="tag" style="background:var(--surface-2);color:var(--text-secondary)">' + g + '</span>').join('') +
+      '</div>' +
+    '</div></div>').join('') || '<p style="font-size:13px;color:var(--text-muted)">No members match.</p>';
 }
-function roleCls(r){return{Band:'band',Choir:'choir',AV:'av',Special:'special',Lead:'lead',Guest:'special'}[r]||'band';}
-function filterRoster(){renderRoster();}
-function setFilter(el,f){activeFilter=f;document.querySelectorAll('.filter-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderRoster();}
+function roleCls(r) { return { Band: 'band', Choir: 'choir', AV: 'av', Special: 'special', Lead: 'lead', Guest: 'special' }[r] || 'band'; }
+function filterRoster() { renderRoster(); }
+function setFilter(el, f) { activeFilter = f; document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active')); el.classList.add('active'); renderRoster(); }
 
 // ── GROUPS ───────────────────────────────────────────────
 function renderGroups() {
-  const colorMap={Band:'av-blue',Choir:'av-teal',AV:'av-purple',Special:'av-amber'};
-  const emojiMap={Band:'🎸',Choir:'🎵',AV:'📽',Special:'🌟'};
-  document.getElementById('groups-grid').innerHTML=groups.map(g=>`
-    <div class="group-card">
-      <div class="group-header">
-        <div class="group-icon ${colorMap[g.type]||'av-blue'}" style="font-size:18px">${emojiMap[g.type]||'🎵'}</div>
-        <div>
-          <div class="group-name">${g.name}</div>
-          <div class="group-count">${g.members.length} member${g.members.length!==1?'s':''}</div>
-        </div>
-      </div>
-      <div class="group-members">
-        ${g.members.map(id=>{const m=members.find(x=>x.id===id);return m?`
-          <div class="group-member-row">
-            <div class="mini-avatar av-${m.color}">${m.first[0]}${m.last[0]}</div>
-            <div class="group-member-name">${m.first} ${m.last}</div>
-            <div class="group-member-role">${m.roles.join(', ')}</div>
-          </div>`:''}).join('')}
-      </div>
-    </div>`).join('');
+  const colorMap = { Band: 'av-blue', Choir: 'av-teal', AV: 'av-purple', Special: 'av-amber' };
+  const emojiMap = { Band: '🎸', Choir: '🎵', AV: '📽', Special: '🌟' };
+  document.getElementById('groups-grid').innerHTML = groups.map(g => '<div class="group-card">' +
+    '<div class="group-header">' +
+      '<div class="group-icon ' + (colorMap[g.type] || 'av-blue') + '" style="font-size:18px">' + (emojiMap[g.type] || '🎵') + '</div>' +
+      '<div><div class="group-name">' + g.name + '</div><div class="group-count">' + g.members.length + ' member' + (g.members.length !== 1 ? 's' : '') + '</div></div>' +
+    '</div>' +
+    '<div class="group-members">' +
+      g.members.map(id => {
+        const m = members.find(x => x.id === id);
+        return m ? '<div class="group-member-row"><div class="mini-avatar av-' + m.color + '">' + m.first[0] + m.last[0] + '</div><div class="group-member-name">' + m.first + ' ' + m.last + '</div><div class="group-member-role">' + m.roles.join(', ') + '</div></div>' : '';
+      }).join('') +
+    '</div></div>').join('') || '<p style="font-size:13px;color:var(--text-muted)">No groups created yet.</p>';
 }
 
-// ── ADMIN AUTH ────────────────────────────────────────────
-function tryLogin() {
-  const pw=document.getElementById('admin-pw').value;
-  if(pw===ADMIN_PW) {
-    document.getElementById('admin-login-wrap').style.display='none';
+// ── PUBLIC SIGNUP FORM ────────────────────────────────────
+async function submitSignup() {
+  const first = document.getElementById('join-first').value.trim();
+  const last = document.getElementById('join-last').value.trim();
+  const email = document.getElementById('join-email').value.trim();
+  const roles = [...document.querySelectorAll('#join-roles-check input:checked')].map(i => i.value);
+  const reminderDays = document.getElementById('join-reminder').value;
+  document.getElementById('join-success').style.display = 'none';
+  document.getElementById('join-error').style.display = 'none';
+  if (!first || !last || !email) {
+    document.getElementById('join-error').style.display = 'block';
+    return;
+  }
+  const result = await callApi('signup', { first, last, email, roles, reminderDays });
+  if (result.error) {
+    document.getElementById('join-error').textContent = result.error;
+    document.getElementById('join-error').style.display = 'block';
+    return;
+  }
+  document.getElementById('join-success').style.display = 'block';
+  document.getElementById('join-first').value = '';
+  document.getElementById('join-last').value = '';
+  document.getElementById('join-email').value = '';
+  document.querySelectorAll('#join-roles-check input').forEach(i => i.checked = false);
+  loadAllData();
+}
+
+// ── GOOGLE SIGN-IN ────────────────────────────────────────
+function initGoogleSignIn() {
+  if (GOOGLE_CLIENT_ID.indexOf('PASTE_YOUR') === 0) {
+    document.getElementById('g_id_signin_container').innerHTML =
+      '<p style="font-size:13px;color:var(--text-muted)">Google sign-in isn\'t configured yet. See the Setup guide.</p>';
+    return;
+  }
+  google.accounts.id.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    callback: handleGoogleSignIn
+  });
+  google.accounts.id.renderButton(
+    document.getElementById('g_id_signin_container'),
+    { theme: 'outline', size: 'large', text: 'signin_with' }
+  );
+}
+
+async function handleGoogleSignIn(response) {
+  // Decode the JWT credential to get the email (no server needed for this part)
+  const payload = JSON.parse(atob(response.credential.split('.')[1]));
+  const email = payload.email;
+  const check = await callApi2Get('verifyAdmin', { email });
+  if (check.isAdmin) {
+    isAdmin = true;
+    adminEmail = email;
+    document.getElementById('admin-login-wrap').style.display = 'none';
     document.getElementById('admin-panel').classList.add('active');
-    renderAdminCal(); renderMembersTable(); renderGroupsTable(); populateGroupChecks(); populateNotifyEvents();
+    renderAdminCal();
+    renderMembersTable();
+    renderGroupsTable();
+    populateGroupChecks();
+    populateNotifyEvents();
   } else {
-    document.getElementById('login-error').style.display='block';
+    document.getElementById('login-error').style.display = 'block';
   }
 }
+
+async function callApi2Get(action, params) {
+  const qs = new URLSearchParams(Object.assign({ action: action }, params)).toString();
+  const res = await fetch(DATA_URL + '?' + qs);
+  return res.json();
+}
+
 function logout() {
-  document.getElementById('admin-login-wrap').style.display='';
+  isAdmin = false;
+  adminEmail = null;
+  document.getElementById('admin-login-wrap').style.display = '';
   document.getElementById('admin-panel').classList.remove('active');
-  document.getElementById('admin-pw').value='';
-  document.getElementById('login-error').style.display='none';
+  document.getElementById('login-error').style.display = 'none';
 }
 
 function showAdminTab(id) {
-  document.querySelectorAll('.admin-section').forEach(s=>s.classList.remove('active'));
-  document.querySelectorAll('.admin-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   event.currentTarget.classList.add('active');
 }
 
 // ── ADMIN CALENDAR ────────────────────────────────────────
-let adminViewMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-
 function renderAdminCal() {
-  const monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
-  const cal=document.getElementById('admin-cal');
-  if(!cal) return;
-  const first=new Date(adminViewMonth.getFullYear(),adminViewMonth.getMonth(),1);
-  const last=new Date(adminViewMonth.getFullYear(),adminViewMonth.getMonth()+1,0);
-  let cells=[];
-  for(let i=0;i<first.getDay();i++) cells.push({d:new Date(adminViewMonth.getFullYear(),adminViewMonth.getMonth(),-(first.getDay()-1-i)),other:true});
-  for(let d=1;d<=last.getDate();d++) cells.push({d:new Date(adminViewMonth.getFullYear(),adminViewMonth.getMonth(),d),other:false});
-  while(cells.length%7!==0) cells.push({d:new Date(adminViewMonth.getFullYear(),adminViewMonth.getMonth()+1,cells.length-last.getDate()-first.getDay()+1),other:true});
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const cal = document.getElementById('admin-cal');
+  if (!cal) return;
+  const first = new Date(adminViewMonth.getFullYear(), adminViewMonth.getMonth(), 1);
+  const last = new Date(adminViewMonth.getFullYear(), adminViewMonth.getMonth() + 1, 0);
+  let cells = [];
+  for (let i = 0; i < first.getDay(); i++) cells.push({ d: new Date(adminViewMonth.getFullYear(), adminViewMonth.getMonth(), -(first.getDay() - 1 - i)), other: true });
+  for (let d = 1; d <= last.getDate(); d++) cells.push({ d: new Date(adminViewMonth.getFullYear(), adminViewMonth.getMonth(), d), other: false });
+  while (cells.length % 7 !== 0) cells.push({ d: new Date(adminViewMonth.getFullYear(), adminViewMonth.getMonth() + 1, cells.length - last.getDate() - first.getDay() + 1), other: true });
 
-  let html=`<div class="mini-cal-header">
-    <button class="icon-btn" style="width:28px;height:28px" onclick="adminChangeMonth(-1)">&#8249;</button>
-    <div class="mini-cal-title">${monthNames[adminViewMonth.getMonth()]} ${adminViewMonth.getFullYear()}</div>
-    <button class="icon-btn" style="width:28px;height:28px" onclick="adminChangeMonth(1)">&#8250;</button>
-  </div>
-  <div class="mini-cal-grid">
-    <div class="mini-cal-label">S</div><div class="mini-cal-label">M</div><div class="mini-cal-label">T</div>
-    <div class="mini-cal-label">W</div><div class="mini-cal-label">T</div><div class="mini-cal-label">F</div><div class="mini-cal-label">S</div>`;
+  let html = '<div class="mini-cal-header">' +
+    '<button class="icon-btn" style="width:28px;height:28px" onclick="adminChangeMonth(-1)">&#8249;</button>' +
+    '<div class="mini-cal-title">' + monthNames[adminViewMonth.getMonth()] + ' ' + adminViewMonth.getFullYear() + '</div>' +
+    '<button class="icon-btn" style="width:28px;height:28px" onclick="adminChangeMonth(1)">&#8250;</button>' +
+  '</div><div class="mini-cal-grid">' +
+    '<div class="mini-cal-label">S</div><div class="mini-cal-label">M</div><div class="mini-cal-label">T</div>' +
+    '<div class="mini-cal-label">W</div><div class="mini-cal-label">T</div><div class="mini-cal-label">F</div><div class="mini-cal-label">S</div>';
 
-  cells.forEach(({d,other})=>{
-    const evs=events.filter(e=>sameDay(e.date,d));
-    const isTod=sameDay(d,today);
-    html+=`<div class="mini-cal-cell${other?' other':''}${isTod?' today':''}"
-      ondragover="event.preventDefault();this.classList.add('drop-target')"
-      ondragleave="this.classList.remove('drop-target')"
-      ondrop="dropEvent(event,'${d.toISOString().split('T')[0]}')"
-      onclick="clickAddEvent('${d.toISOString().split('T')[0]}')">
-      <div class="dn">${d.getDate()}</div>
-      ${evs.map(e=>`<div class="ev-dot ${e.type}"></div>`).join('')}
-    </div>`;
+  cells.forEach(({ d, other }) => {
+    const evs = events.filter(e => sameDay(e.date, d));
+    const isTod = sameDay(d, today);
+    const dateStr = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    html += '<div class="mini-cal-cell' + (other ? ' other' : '') + (isTod ? ' today' : '') + '"' +
+      ' ondragover="event.preventDefault();this.classList.add(\\'drop-target\\')"' +
+      ' ondragleave="this.classList.remove(\\'drop-target\\')"' +
+      ' ondrop="dropEvent(event,\\'' + dateStr + '\\')"' +
+      ' onclick="clickAddEvent(\\'' + dateStr + '\\')">' +
+      '<div class="dn">' + d.getDate() + '</div>' +
+      evs.map(e => '<div class="ev-dot ' + e.type + '"></div>').join('') +
+    '</div>';
   });
-  html+='</div>';
-  cal.innerHTML=html;
+  html += '</div>';
+  cal.innerHTML = html;
   renderAdminEventList();
 }
 
-function adminChangeMonth(d){adminViewMonth=new Date(adminViewMonth.getFullYear(),adminViewMonth.getMonth()+d,1);renderAdminCal();}
+function adminChangeMonth(d) { adminViewMonth = new Date(adminViewMonth.getFullYear(), adminViewMonth.getMonth() + d, 1); renderAdminCal(); }
 
 function renderAdminEventList() {
-  const upcoming=events.filter(e=>e.date>=new Date(today.getFullYear(),today.getMonth(),today.getDate()-1)).sort((a,b)=>a.date-b.date);
-  document.getElementById('admin-event-list').innerHTML=upcoming.map(e=>`
-    <div class="event-item-admin">
-      <div class="ev-label">
-        <div class="ev-type ${e.type}">${{rehearsal:'Rehearsal',performance:'Performance',special:'Special music'}[e.type]}</div>
-        <div style="font-weight:500">${e.title}</div>
-        <div style="color:var(--text-muted);font-size:11px">${e.date.toLocaleDateString('en-CA',{month:'short',day:'numeric'})} · ${e.time}</div>
-      </div>
-      <button class="btn btn-danger btn-sm" onclick="deleteEvent(${e.id})">Remove</button>
-    </div>`).join('') || '<p style="font-size:13px;color:var(--text-muted);padding:12px 0">No upcoming events. Drag an event type onto the calendar or click a date to add one.</p>';
+  const upcoming = events.filter(e => e.date >= new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1)).sort((a, b) => a.date - b.date);
+  document.getElementById('admin-event-list').innerHTML = upcoming.map(e => '<div class="event-item-admin">' +
+    '<div class="ev-label">' +
+      '<div class="ev-type ' + e.type + '">' + { rehearsal: 'Rehearsal', performance: 'Performance', special: 'Special music' }[e.type] + '</div>' +
+      '<div style="font-weight:500">' + e.title + '</div>' +
+      '<div style="color:var(--text-muted);font-size:11px">' + e.date.toLocaleDateString('en-CA', { month: 'short', day: 'numeric' }) + ' · ' + e.time + '</div>' +
+    '</div>' +
+    '<button class="btn btn-danger btn-sm" onclick="deleteEvent(' + e.id + ')">Remove</button>' +
+  '</div>').join('') || '<p style="font-size:13px;color:var(--text-muted);padding:12px 0">No upcoming events. Drag an event type onto the calendar or click a date to add one.</p>';
 }
 
-function startDrag(e, type) { dragType=type; }
+function startDrag(e, type) { dragType = type; }
 
 function dropEvent(e, dateStr) {
   e.preventDefault();
   e.currentTarget.classList.remove('drop-target');
-  if(!dragType) return;
-  const d=new Date(dateStr+'T12:00:00');
-  addEventToDate(dragType, d);
-  dragType=null;
+  if (!dragType) return;
+  addEventToDate(dragType, dateStr);
+  dragType = null;
 }
 
 function clickAddEvent(dateStr) {
-  const type=document.getElementById('quick-event-type').value;
-  const d=new Date(dateStr+'T12:00:00');
-  addEventToDate(type, d);
+  const type = document.getElementById('quick-event-type').value;
+  addEventToDate(type, dateStr);
 }
 
-function addEventToDate(type, d) {
-  const title=document.getElementById('quick-event-title').value || {rehearsal:'Rehearsal',performance:'Performance',special:'Special music'}[type];
-  const time=document.getElementById('quick-event-time').value || '6:00 PM';
-  const id=Math.max(0,...events.map(e=>e.id))+1;
-  events.push({id,type,title,date:d,time,groups:[],assignments:[]});
+async function addEventToDate(type, dateStr) {
+  const title = document.getElementById('quick-event-title').value || { rehearsal: 'Rehearsal', performance: 'Performance', special: 'Special music' }[type];
+  const time = document.getElementById('quick-event-time').value || '6:00 PM';
+  const result = await callApi('addEvent', { type, title, date: dateStr, time, groupNames: [], assignedMemberIds: [], assignedRoles: [] });
+  if (result.error) { alert(result.error); return; }
+  document.getElementById('quick-event-title').value = '';
+  document.getElementById('quick-event-time').value = '';
+  await loadAllData();
   renderAdminCal();
-  document.getElementById('quick-event-title').value='';
-  document.getElementById('quick-event-time').value='';
   populateNotifyEvents();
 }
 
-function deleteEvent(id){events=events.filter(e=>e.id!==id);renderAdminCal();}
+async function deleteEvent(id) {
+  await callApi('deleteEvent', { id });
+  await loadAllData();
+  renderAdminCal();
+}
 
 // ── MEMBERS ADMIN ─────────────────────────────────────────
-function addMember() {
-  const first=document.getElementById('m-first').value.trim();
-  const last=document.getElementById('m-last').value.trim();
-  const email=document.getElementById('m-email').value.trim();
-  if(!first||!last||!email){alert('Please fill in name and email.');return;}
-  const roles=[...document.querySelectorAll('#roles-check input:checked')].map(i=>i.value);
-  const grps=[...document.querySelectorAll('#groups-check-member input:checked')].map(i=>i.value);
-  const colors=['blue','teal','amber','rose','purple'];
-  const id=Math.max(0,...members.map(m=>m.id))+1;
-  members.push({id,first,last,email,roles,groups:grps,color:colors[id%colors.length]});
-  grps.forEach(gn=>{const g=groups.find(x=>x.name===gn);if(g&&!g.members.includes(id))g.members.push(id);});
+async function addMember() {
+  const first = document.getElementById('m-first').value.trim();
+  const last = document.getElementById('m-last').value.trim();
+  const email = document.getElementById('m-email').value.trim();
+  if (!first || !last || !email) { alert('Please fill in name and email.'); return; }
+  const roles = [...document.querySelectorAll('#roles-check input:checked')].map(i => i.value);
+  const grps = [...document.querySelectorAll('#groups-check-member input:checked')].map(i => i.value);
+  const result = await callApi('addMember', { first, last, email, roles, groups: grps, reminderDays: 2 });
+  if (result.error) { alert(result.error); return; }
+  document.getElementById('m-first').value = '';
+  document.getElementById('m-last').value = '';
+  document.getElementById('m-email').value = '';
+  document.querySelectorAll('#roles-check input').forEach(i => i.checked = false);
+  document.querySelectorAll('#groups-check-member input').forEach(i => i.checked = false);
+  await loadAllData();
   renderMembersTable();
-  document.getElementById('m-first').value='';
-  document.getElementById('m-last').value='';
-  document.getElementById('m-email').value='';
-  document.querySelectorAll('#roles-check input').forEach(i=>i.checked=false);
-  document.querySelectorAll('#groups-check-member input').forEach(i=>i.checked=false);
   populateGroupChecks();
 }
 
 function renderMembersTable() {
-  document.getElementById('members-table-body').innerHTML=members.map(m=>`
-    <tr>
-      <td style="font-weight:500">${m.first} ${m.last}</td>
-      <td style="color:var(--text-secondary)">${m.email}</td>
-      <td>${m.roles.map(r=>`<span class="tag ${roleCls(r)}">${r}</span>`).join(' ')}</td>
-      <td style="color:var(--text-secondary);font-size:12px">${m.groups.join(', ')||'—'}</td>
-      <td><button class="btn btn-danger btn-sm" onclick="deleteMember(${m.id})">Remove</button></td>
-    </tr>`).join('');
+  document.getElementById('members-table-body').innerHTML = members.map(m => '<tr>' +
+    '<td style="font-weight:500">' + m.first + ' ' + m.last + '</td>' +
+    '<td style="color:var(--text-secondary)">' + m.email + '</td>' +
+    '<td>' + m.roles.map(r => '<span class="tag ' + roleCls(r) + '">' + r + '</span>').join(' ') + '</td>' +
+    '<td style="color:var(--text-secondary);font-size:12px">' + (m.groups.join(', ') || '—') + '</td>' +
+    '<td><button class="btn btn-danger btn-sm" onclick="deleteMember(' + m.id + ')">Remove</button></td>' +
+  '</tr>').join('');
 }
 
-function deleteMember(id){members=members.filter(m=>m.id!==id);groups.forEach(g=>g.members=g.members.filter(mid=>mid!==id));renderMembersTable();populateGroupChecks();}
+async function deleteMember(id) {
+  await callApi('deleteMember', { id });
+  await loadAllData();
+  renderMembersTable();
+  populateGroupChecks();
+}
 
 // ── GROUPS ADMIN ──────────────────────────────────────────
-function addGroup() {
-  const name=document.getElementById('g-name').value.trim();
-  const type=document.getElementById('g-type').value;
-  if(!name){alert('Please enter a group name.');return;}
-  const mids=[...document.querySelectorAll('#group-members-check input:checked')].map(i=>parseInt(i.value));
-  const id=Math.max(0,...groups.map(g=>g.id))+1;
-  groups.push({id,name,type,members:mids});
-  mids.forEach(mid=>{const m=members.find(x=>x.id===mid);if(m&&!m.groups.includes(name))m.groups.push(name);});
+async function addGroup() {
+  const name = document.getElementById('g-name').value.trim();
+  const type = document.getElementById('g-type').value;
+  if (!name) { alert('Please enter a group name.'); return; }
+  const mids = [...document.querySelectorAll('#group-members-check input:checked')].map(i => parseInt(i.value));
+  const result = await callApi('addGroup', { name, type, memberIds: mids });
+  if (result.error) { alert(result.error); return; }
+  document.getElementById('g-name').value = '';
+  document.querySelectorAll('#group-members-check input').forEach(i => i.checked = false);
+  await loadAllData();
   renderGroupsTable();
-  document.getElementById('g-name').value='';
-  document.querySelectorAll('#group-members-check input').forEach(i=>i.checked=false);
   populateGroupChecks();
 }
 
 function renderGroupsTable() {
-  document.getElementById('groups-table-body').innerHTML=groups.map(g=>`
-    <tr>
-      <td style="font-weight:500">${g.name}</td>
-      <td><span class="tag ${roleCls(g.type)}">${g.type}</span></td>
-      <td style="font-size:12px;color:var(--text-secondary)">${g.members.map(id=>{const m=members.find(x=>x.id===id);return m?m.first+' '+m.last:''}).filter(Boolean).join(', ')||'—'}</td>
-      <td><button class="btn btn-danger btn-sm" onclick="deleteGroup(${g.id})">Remove</button></td>
-    </tr>`).join('');
+  document.getElementById('groups-table-body').innerHTML = groups.map(g => '<tr>' +
+    '<td style="font-weight:500">' + g.name + '</td>' +
+    '<td><span class="tag ' + roleCls(g.type) + '">' + g.type + '</span></td>' +
+    '<td style="font-size:12px;color:var(--text-secondary)">' + (g.members.map(id => { const m = members.find(x => x.id === id); return m ? m.first + ' ' + m.last : ''; }).filter(Boolean).join(', ') || '—') + '</td>' +
+    '<td><button class="btn btn-danger btn-sm" onclick="deleteGroup(' + g.id + ')">Remove</button></td>' +
+  '</tr>').join('');
 }
 
-function deleteGroup(id){const g=groups.find(x=>x.id===id);if(g)members.forEach(m=>m.groups=m.groups.filter(n=>n!==g.name));groups=groups.filter(x=>x.id!==id);renderGroupsTable();populateGroupChecks();}
+async function deleteGroup(id) {
+  await callApi('deleteGroup', { id });
+  await loadAllData();
+  renderGroupsTable();
+  populateGroupChecks();
+}
 
 function populateGroupChecks() {
-  const gOpts=groups.map(g=>`<label class="checkbox-item"><input type="checkbox" value="${g.name}"> ${g.name}</label>`).join('');
-  document.querySelectorAll('#groups-check-member,#group-members-check').forEach(el=>{
-    if(el.id==='group-members-check'){
-      el.innerHTML=members.map(m=>`<label class="checkbox-item"><input type="checkbox" value="${m.id}"> ${m.first} ${m.last}</label>`).join('');
-    } else {
-      el.innerHTML=gOpts;
-    }
-  });
+  document.getElementById('groups-check-member').innerHTML = groups.map(g => '<label class="checkbox-item"><input type="checkbox" value="' + g.name + '"> ' + g.name + '</label>').join('');
+  document.getElementById('group-members-check').innerHTML = members.map(m => '<label class="checkbox-item"><input type="checkbox" value="' + m.id + '"> ' + m.first + ' ' + m.last + '</label>').join('');
 }
 
 // ── NOTIFICATIONS ─────────────────────────────────────────
 function populateNotifyEvents() {
-  const sel=document.getElementById('notify-event');
-  if(!sel) return;
-  sel.innerHTML=events.sort((a,b)=>a.date-b.date).map(e=>`<option value="${e.id}">${e.date.toLocaleDateString('en-CA',{month:'short',day:'numeric'})} — ${e.title}</option>`).join('');
+  const sel = document.getElementById('notify-event');
+  if (!sel) return;
+  sel.innerHTML = events.sort((a, b) => a.date - b.date).map(e => '<option value="' + e.id + '">' + e.date.toLocaleDateString('en-CA', { month: 'short', day: 'numeric' }) + ' — ' + e.title + '</option>').join('');
 }
 
 function previewNotify() {
-  const target=document.getElementById('notify-target').value;
-  const eventId=parseInt(document.getElementById('notify-event').value);
-  const msg=document.getElementById('notify-msg').value;
-  const ev=events.find(e=>e.id===eventId);
-  if(!ev) return;
-  const recipientMembers=target==='all'?members:members.filter(m=>m.roles.includes(target));
-  const preview=document.getElementById('notify-preview');
-  preview.style.display='block';
-  preview.innerHTML=`
-    <strong>To:</strong> ${recipientMembers.length} member${recipientMembers.length!==1?'s':''} — ${recipientMembers.map(m=>m.first+' '+m.last).join(', ')}<br><br>
-    <strong>Subject:</strong> Reminder: ${ev.title} — ${ev.date.toLocaleDateString('en-CA',{weekday:'long',month:'long',day:'numeric'})}<br><br>
-    Hi [Name],<br><br>
-    This is a reminder that <strong>${ev.title}</strong> is coming up on <strong>${ev.date.toLocaleDateString('en-CA',{weekday:'long',month:'long',day:'numeric'})}</strong> at <strong>${ev.time}</strong>.${msg?'<br><br>'+msg:''}<br><br>
-    See the full schedule at our music department page.<br><br>
-    Scarborough SDA Music Department`;
+  const target = document.getElementById('notify-target').value;
+  const eventId = parseInt(document.getElementById('notify-event').value);
+  const msg = document.getElementById('notify-msg').value;
+  const ev = events.find(e => e.id === eventId);
+  if (!ev) return;
+  const recipientMembers = target === 'all' ? members : members.filter(m => m.roles.includes(target));
+  const preview = document.getElementById('notify-preview');
+  preview.style.display = 'block';
+  preview.innerHTML =
+    '<strong>To:</strong> ' + recipientMembers.length + ' member' + (recipientMembers.length !== 1 ? 's' : '') + ' — ' + recipientMembers.map(m => m.first + ' ' + m.last).join(', ') + '<br><br>' +
+    '<strong>Subject:</strong> Reminder: ' + ev.title + ' — ' + ev.date.toLocaleDateString('en-CA', { weekday: 'long', month: 'long', day: 'numeric' }) + '<br><br>' +
+    'Hi [Name],<br><br>This is a reminder that <strong>' + ev.title + '</strong> is coming up on <strong>' + ev.date.toLocaleDateString('en-CA', { weekday: 'long', month: 'long', day: 'numeric' }) + '</strong> at <strong>' + ev.time + '</strong>.' + (msg ? '<br><br>' + msg : '') + '<br><br>See the full schedule at our music department page.<br><br>Scarborough SDA Music Department' +
+    '<br><br><button class="btn btn-primary btn-sm" onclick="sendNotifyNow(' + ev.id + ')">Send this now</button>';
+}
+
+async function sendNotifyNow(eventId) {
+  const result = await callApi('sendTestReminder', { eventId });
+  if (result.error) { alert('Error: ' + result.error); return; }
+  alert('Sent to ' + result.sentTo + ' member' + (result.sentTo !== 1 ? 's' : '') + '.');
 }
 
 // ── INIT ──────────────────────────────────────────────────
-renderCalendar();
+loadAllData();
+window.addEventListener('load', () => {
+  if (typeof google !== 'undefined' && google.accounts) initGoogleSignIn();
+  else setTimeout(initGoogleSignIn, 500);
+});
 </script>
 </body>
 </html>
