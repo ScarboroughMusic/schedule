@@ -576,6 +576,10 @@
         <div class="modal-section-title">Assigned this week</div>
         <div id="modal-assignments"></div>
       </div>
+      <div class="modal-section">
+        <div class="modal-section-title">Songs</div>
+        <div id="modal-songs"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -592,6 +596,7 @@ let members = [];
 let groups = [];
 let events = [];
 let roles = [];
+let songs = [];
 let isAdmin = false;
 let adminEmail = null;
 
@@ -643,6 +648,15 @@ async function loadAllData() {
     }));
 
     roles = (data.roles || []).map(r => ({ id: r.ID, name: r.Name }));
+
+    songs = (data.songs || []).map(s => ({
+      id: s.ID,
+      eventId: s.EventID,
+      groupName: s.GroupName,
+      title: s.Title,
+      url: s.URL,
+      addedBy: s.AddedBy
+    }));
 
     renderCalendar();
     renderRoleCheckboxes();
@@ -854,9 +868,67 @@ function showEventModal(id) {
     }).join('');
   }
   assigns.innerHTML = html || '<p style="font-size:13px;color:var(--text-muted)">No one assigned yet.</p>';
+  renderModalSongs(e);
   document.getElementById('event-modal').classList.add('open');
 }
 function closeModal() { document.getElementById('event-modal').classList.remove('open'); }
+
+// ── SONGS ──────────────────────────────────────────────────
+// Open to everyone — anyone with the site link can add or remove songs
+// for a group's scheduled week, no admin login required.
+
+function renderModalSongs(e) {
+  const wrap = document.getElementById('modal-songs');
+  const groupList = e.groups.length ? e.groups : [null]; // null = ungrouped event, one shared list
+
+  wrap.innerHTML = groupList.map(gName => {
+    const groupSongs = songs.filter(s => String(s.eventId) === String(e.id) && (gName === null ? !s.groupName : s.groupName === gName));
+    const label = gName || 'Songs';
+    return '<div style="margin-bottom:14px">' +
+      (gName ? '<div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:6px">' + gName + '</div>' : '') +
+      '<div id="song-list-' + e.id + '-' + cssSafe(gName) + '">' +
+        (groupSongs.length ? groupSongs.map(s => songRowHtml(s)).join('') : '<p style="font-size:12px;color:var(--text-muted)">No songs added yet.</p>') +
+      '</div>' +
+      '<div style="display:flex;gap:6px;margin-top:6px">' +
+        '<input type="text" id="new-song-title-' + e.id + '-' + cssSafe(gName) + '" placeholder="Song title" style="flex:1;font-size:13px;padding:6px 10px">' +
+        '<input type="text" id="new-song-url-' + e.id + '-' + cssSafe(gName) + '" placeholder="Link (optional)" style="flex:1;font-size:13px;padding:6px 10px">' +
+        '<button class="btn btn-secondary btn-sm" onclick="addSongFromModal(' + e.id + ',\'' + (gName || '') + '\')">Add</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function cssSafe(s) { return (s || 'none').replace(/[^a-zA-Z0-9]/g, '_'); }
+
+function songRowHtml(s) {
+  return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);font-size:13px">' +
+    '<div style="flex:1">' + s.title + (s.url ? ' — <a href="' + s.url + '" target="_blank" rel="noopener" style="color:var(--accent)">link</a>' : '') + '</div>' +
+    '<button class="btn btn-secondary btn-sm" onclick="removeSongFromModal(' + s.id + ')" style="padding:2px 8px;font-size:11px">Remove</button>' +
+  '</div>';
+}
+
+async function addSongFromModal(eventId, groupName) {
+  const titleEl = document.getElementById('new-song-title-' + eventId + '-' + cssSafe(groupName));
+  const urlEl = document.getElementById('new-song-url-' + eventId + '-' + cssSafe(groupName));
+  const title = titleEl.value.trim();
+  const url = urlEl.value.trim();
+  if (!title) { alert('Enter a song title.'); return; }
+  const result = await callApi('addSong', { eventId, groupName, title, url });
+  if (result.error) { alert(result.error); return; }
+  await loadAllData();
+  const e = events.find(x => x.id === eventId);
+  if (e) renderModalSongs(e);
+}
+
+async function removeSongFromModal(songId) {
+  const song = songs.find(s => s.id === songId);
+  await callApi('deleteSong', { id: songId });
+  await loadAllData();
+  if (song) {
+    const e = events.find(x => x.id === song.eventId);
+    if (e) renderModalSongs(e);
+  }
+}
 
 // ── ROSTER ───────────────────────────────────────────────
 function renderRoster() {
