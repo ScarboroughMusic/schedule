@@ -615,8 +615,20 @@ async function loadAllData() {
   }
   try {
     const res = await fetch(DATA_URL + '?action=getAll');
-    const data = await res.json();
-    if (data.error) { console.error(data.error); return; }
+    const text = await res.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (parseErr) {
+      console.error('Apps Script did not return JSON for getAll:', text);
+      showConfigWarning('The backend returned an unexpected response (not JSON). This usually means there\u2019s an error inside the Apps Script, or a redeploy is needed. Raw response: ' + text.slice(0, 300));
+      return;
+    }
+    if (data.error) {
+      console.error(data.error);
+      showConfigWarning('Backend error: ' + data.error);
+      return;
+    }
 
     members = (data.members || []).map((m, i) => ({
       id: m.ID,
@@ -668,18 +680,29 @@ async function loadAllData() {
   }
 }
 
-function showConfigWarning() {
+function showConfigWarning(customMsg) {
+  const msg = customMsg || 'This site isn\'t connected to a Google Sheet yet. Go to Admin → Setup guide to finish setup.';
   document.getElementById('upcoming-strip').innerHTML =
-    '<div style="padding:16px;background:var(--amber-light);border-radius:12px;color:var(--amber);font-size:13px;grid-column:1/-1">' +
-    'This site isn\'t connected to a Google Sheet yet. Go to Admin → Setup guide to finish setup.</div>';
+    '<div style="padding:16px;background:var(--amber-light);border-radius:12px;color:var(--amber);font-size:13px;grid-column:1/-1">' + msg + '</div>';
 }
 
 async function callApi(action, payload) {
-  const res = await fetch(DATA_URL, {
-    method: 'POST',
-    body: JSON.stringify(Object.assign({ action: action }, payload))
-  });
-  return res.json();
+  try {
+    const res = await fetch(DATA_URL, {
+      method: 'POST',
+      body: JSON.stringify(Object.assign({ action: action }, payload))
+    });
+    const text = await res.text();
+    try {
+      return JSON.parse(text);
+    } catch (parseErr) {
+      console.error('Apps Script did not return JSON:', text);
+      return { error: 'The backend returned an unexpected response. This usually means the Apps Script has an error, or the deployment needs to be redone. Raw response: ' + text.slice(0, 200) };
+    }
+  } catch (networkErr) {
+    console.error('Network error calling Apps Script:', networkErr);
+    return { error: 'Could not reach the backend at all. Check that DATA_URL is correct and the Apps Script is deployed.' };
+  }
 }
 
 function sameDay(a, b) {
@@ -1066,8 +1089,19 @@ async function handleGoogleSignIn(response) {
 
 async function callApi2Get(action, params) {
   const qs = new URLSearchParams(Object.assign({ action: action }, params)).toString();
-  const res = await fetch(DATA_URL + '?' + qs);
-  return res.json();
+  try {
+    const res = await fetch(DATA_URL + '?' + qs);
+    const text = await res.text();
+    try {
+      return JSON.parse(text);
+    } catch (parseErr) {
+      console.error('Apps Script did not return JSON:', text);
+      return { error: 'Unexpected response from backend.', isAdmin: false };
+    }
+  } catch (networkErr) {
+    console.error('Network error:', networkErr);
+    return { error: 'Could not reach backend.', isAdmin: false };
+  }
 }
 
 function logout() {
