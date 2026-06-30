@@ -252,11 +252,11 @@
       </div>
     </div>
     <nav class="nav">
-      <button class="nav-btn active" onclick="showPage('schedule')">Schedule</button>
-      <button class="nav-btn" onclick="showPage('roster')">Roster</button>
-      <button class="nav-btn" onclick="showPage('groups')">Groups</button>
-      <button class="nav-btn" onclick="showPage('join')">Join the list</button>
-      <button class="nav-btn admin-btn" onclick="showPage('admin')">Admin</button>
+      <button class="nav-btn active" onclick="showPage('schedule', this)">Schedule</button>
+      <button class="nav-btn" onclick="showPage('roster', this)">Roster</button>
+      <button class="nav-btn" onclick="showPage('groups', this)">Groups</button>
+      <button class="nav-btn" onclick="showPage('join', this)">Join the list</button>
+      <button class="nav-btn admin-btn" onclick="showPage('admin', this)">Admin</button>
     </nav>
   </div>
 </header>
@@ -360,11 +360,11 @@
       <button class="btn btn-secondary" onclick="logout()">Sign out</button>
     </div>
     <div class="admin-tabs">
-      <button class="admin-tab active" onclick="showAdminTab('tab-schedule')">📅 Schedule</button>
-      <button class="admin-tab" onclick="showAdminTab('tab-members')">👥 Members</button>
-      <button class="admin-tab" onclick="showAdminTab('tab-groups')">🎵 Groups</button>
-      <button class="admin-tab" onclick="showAdminTab('tab-notify')">🔔 Notifications</button>
-      <button class="admin-tab" onclick="showAdminTab('tab-setup')">⚙️ Setup guide</button>
+      <button class="admin-tab active" onclick="showAdminTab('tab-schedule', this)">📅 Schedule</button>
+      <button class="admin-tab" onclick="showAdminTab('tab-members', this)">👥 Members</button>
+      <button class="admin-tab" onclick="showAdminTab('tab-groups', this)">🎵 Groups</button>
+      <button class="admin-tab" onclick="showAdminTab('tab-notify', this)">🔔 Notifications</button>
+      <button class="admin-tab" onclick="showAdminTab('tab-setup', this)">⚙️ Setup guide</button>
     </div>
 
     <!-- SCHEDULE ADMIN -->
@@ -669,11 +669,11 @@ function sameDay(a, b) {
 }
 
 // ── NAVIGATION ────────────────────────────────────────────
-function showPage(name) {
+function showPage(name, btn) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('page-' + name).classList.add('active');
-  event.currentTarget.classList.add('active');
+  if (btn) btn.classList.add('active');
   if (name === 'schedule') renderCalendar();
   if (name === 'roster') renderRoster();
   if (name === 'groups') renderGroups();
@@ -866,11 +866,11 @@ function logout() {
   document.getElementById('login-error').style.display = 'none';
 }
 
-function showAdminTab(id) {
+function showAdminTab(id, btn) {
   document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
   document.getElementById(id).classList.add('active');
-  event.currentTarget.classList.add('active');
+  if (btn) btn.classList.add('active');
 }
 
 // ── ADMIN CALENDAR ────────────────────────────────────────
