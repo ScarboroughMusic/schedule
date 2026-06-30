@@ -289,12 +289,8 @@
       <span class="search-icon">🔍</span>
       <input type="text" id="roster-search" placeholder="Search members..." oninput="filterRoster()">
     </div>
-    <div class="filter-tabs">
+    <div class="filter-tabs" id="roster-filter-tabs">
       <button class="filter-tab active" data-filter="all" onclick="setFilter(this,'all')">All</button>
-      <button class="filter-tab" data-filter="Band" onclick="setFilter(this,'Band')">Band</button>
-      <button class="filter-tab" data-filter="Choir" onclick="setFilter(this,'Choir')">Choir</button>
-      <button class="filter-tab" data-filter="AV" onclick="setFilter(this,'AV')">AV</button>
-      <button class="filter-tab" data-filter="Special" onclick="setFilter(this,'Special')">Special</button>
     </div>
   </div>
   <div class="member-grid" id="member-grid"></div>
@@ -439,10 +435,7 @@
           <div class="form-group">
             <label>Type</label>
             <select id="g-type">
-              <option value="Band">Band</option>
-              <option value="Choir">Choir</option>
-              <option value="AV">AV Team</option>
-              <option value="Special">Special music</option>
+              <option value="">Loading roles...</option>
             </select>
           </div>
         </div>
@@ -737,7 +730,7 @@ function renderUpcoming() {
 function groupTagClass(name) {
   const g = groups.find(x => x.name === name);
   if (!g) return 'band';
-  return { Band: 'band', Choir: 'choir', AV: 'av', Special: 'special' }[g.type] || 'band';
+  return roleCls(g.type);
 }
 
 function changeMonth(d) { viewMonth = new Date(viewMonth.getFullYear(), viewMonth.getMonth() + d, 1); renderCalendar(); }
@@ -782,7 +775,13 @@ function renderRoster() {
       '</div>' +
     '</div></div>').join('') || '<p style="font-size:13px;color:var(--text-muted)">No members match.</p>';
 }
-function roleCls(r) { return { Band: 'band', Choir: 'choir', AV: 'av', Special: 'special', Lead: 'lead', Guest: 'special' }[r] || 'band'; }
+const tagColorCycle = ['band', 'choir', 'av', 'special', 'lead'];
+function roleCls(r) {
+  if (!r) return 'band';
+  let hash = 0;
+  for (let i = 0; i < r.length; i++) hash = (hash * 31 + r.charCodeAt(i)) >>> 0;
+  return tagColorCycle[hash % tagColorCycle.length];
+}
 
 function renderRoleCheckboxes() {
   const html = roles.map(r => '<label class="checkbox-item"><input type="checkbox" value="' + r.name + '"> ' + r.name + '</label>').join('')
@@ -791,6 +790,21 @@ function renderRoleCheckboxes() {
   const adminEl = document.getElementById('roles-check');
   if (joinEl) joinEl.innerHTML = html;
   if (adminEl) adminEl.innerHTML = html;
+
+  const filterTabs = document.getElementById('roster-filter-tabs');
+  if (filterTabs) {
+    const currentFilter = activeFilter;
+    filterTabs.innerHTML = '<button class="filter-tab' + (currentFilter === 'all' ? ' active' : '') + '" data-filter="all" onclick="setFilter(this,\'all\')">All</button>' +
+      roles.map(r => '<button class="filter-tab' + (currentFilter === r.name ? ' active' : '') + '" data-filter="' + r.name + '" onclick="setFilter(this,\'' + r.name + '\')">' + r.name + '</button>').join('');
+  }
+
+  const gTypeSelects = document.querySelectorAll('#g-type, #eg-type');
+  gTypeSelects.forEach(sel => {
+    const currentVal = sel.value;
+    sel.innerHTML = roles.map(r => '<option value="' + r.name + '">' + r.name + '</option>').join('')
+      || '<option value="">Add a role first</option>';
+    if (roles.some(r => r.name === currentVal)) sel.value = currentVal;
+  });
 }
 function filterRoster() { renderRoster(); }
 function setFilter(el, f) { activeFilter = f; document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active')); el.classList.add('active'); renderRoster(); }
@@ -1065,7 +1079,7 @@ function openEditGroup(id) {
       '<div class="form-row">' +
         '<div class="form-group"><label>Group name</label><input type="text" id="eg-name" value="' + g.name + '"></div>' +
         '<div class="form-group"><label>Type</label><select id="eg-type">' +
-          ['Band','Choir','AV','Special'].map(t => '<option value="' + t + '"' + (t === g.type ? ' selected' : '') + '>' + ({Band:'Band',Choir:'Choir',AV:'AV Team',Special:'Special music'}[t]) + '</option>').join('') +
+          roles.map(r => '<option value="' + r.name + '"' + (r.name === g.type ? ' selected' : '') + '>' + r.name + '</option>').join('') +
         '</select></div>' +
       '</div>' +
       '<div class="form-group"><label>Members</label><div class="checkbox-group" id="eg-members">' +
