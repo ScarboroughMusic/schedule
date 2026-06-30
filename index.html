@@ -319,11 +319,7 @@
       <div class="form-group">
         <label>What do you take part in?</label>
         <div class="checkbox-group" id="join-roles-check">
-          <label class="checkbox-item"><input type="checkbox" value="Band"> Band</label>
-          <label class="checkbox-item"><input type="checkbox" value="Choir"> Choir</label>
-          <label class="checkbox-item"><input type="checkbox" value="AV"> AV Team</label>
-          <label class="checkbox-item"><input type="checkbox" value="Special"> Special music</label>
-          <label class="checkbox-item"><input type="checkbox" value="Guest"> Guest musician</label>
+          <p style="font-size:12px;color:var(--text-muted)">Loading roles...</p>
         </div>
       </div>
       <div class="form-group">
@@ -363,6 +359,7 @@
       <button class="admin-tab active" onclick="showAdminTab('tab-schedule', this)">📅 Schedule</button>
       <button class="admin-tab" onclick="showAdminTab('tab-members', this)">👥 Members</button>
       <button class="admin-tab" onclick="showAdminTab('tab-groups', this)">🎵 Groups</button>
+      <button class="admin-tab" onclick="showAdminTab('tab-roles', this)">🏷️ Roles</button>
       <button class="admin-tab" onclick="showAdminTab('tab-notify', this)">🔔 Notifications</button>
       <button class="admin-tab" onclick="showAdminTab('tab-setup', this)">⚙️ Setup guide</button>
     </div>
@@ -416,12 +413,7 @@
         <div class="form-group">
           <label>Roles</label>
           <div class="checkbox-group" id="roles-check">
-            <label class="checkbox-item"><input type="checkbox" value="Band"> Band</label>
-            <label class="checkbox-item"><input type="checkbox" value="Choir"> Choir</label>
-            <label class="checkbox-item"><input type="checkbox" value="AV"> AV Team</label>
-            <label class="checkbox-item"><input type="checkbox" value="Special"> Special music</label>
-            <label class="checkbox-item"><input type="checkbox" value="Lead"> Week lead</label>
-            <label class="checkbox-item"><input type="checkbox" value="Guest"> Guest musician</label>
+            <p style="font-size:12px;color:var(--text-muted)">Loading roles...</p>
           </div>
         </div>
         <div class="form-group">
@@ -464,6 +456,25 @@
         <table>
           <thead><tr><th>Group</th><th>Type</th><th>Members</th><th></th></tr></thead>
           <tbody id="groups-table-body"></tbody>
+        </table>
+      </div>
+      <div id="edit-group-panel" style="display:none"></div>
+    </div>
+
+    <!-- ROLES ADMIN -->
+    <div class="admin-section" id="tab-roles">
+      <div class="card-form">
+        <h3>Add role</h3>
+        <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px">Roles are what you assign to people — Band, Choir, AV Team, Lead, etc. Add, rename, or remove them here and the change applies everywhere they're used.</p>
+        <div class="form-row">
+          <div class="form-group"><label>Role name</label><input type="text" id="role-name" placeholder="e.g. Sound tech"></div>
+        </div>
+        <button class="btn btn-primary" onclick="addRole()">Add role</button>
+      </div>
+      <div class="table-list">
+        <table>
+          <thead><tr><th>Role</th><th></th></tr></thead>
+          <tbody id="roles-table-body"></tbody>
         </table>
       </div>
     </div>
@@ -590,6 +601,7 @@ const GOOGLE_CLIENT_ID = '398173228737-1p8q7p1rqsfrgn4p63uoshfjrbkr1pjo.apps.goo
 let members = [];
 let groups = [];
 let events = [];
+let roles = [];
 let isAdmin = false;
 let adminEmail = null;
 
@@ -641,7 +653,10 @@ async function loadAllData() {
       assignedRoles: String(e.Roles || '').split(',').filter(Boolean)
     }));
 
+    roles = (data.roles || []).map(r => ({ id: r.ID, name: r.Name }));
+
     renderCalendar();
+    renderRoleCheckboxes();
     if (document.getElementById('page-roster').classList.contains('active')) renderRoster();
     if (document.getElementById('page-groups').classList.contains('active')) renderGroups();
   } catch (err) {
@@ -768,6 +783,15 @@ function renderRoster() {
     '</div></div>').join('') || '<p style="font-size:13px;color:var(--text-muted)">No members match.</p>';
 }
 function roleCls(r) { return { Band: 'band', Choir: 'choir', AV: 'av', Special: 'special', Lead: 'lead', Guest: 'special' }[r] || 'band'; }
+
+function renderRoleCheckboxes() {
+  const html = roles.map(r => '<label class="checkbox-item"><input type="checkbox" value="' + r.name + '"> ' + r.name + '</label>').join('')
+    || '<p style="font-size:12px;color:var(--text-muted)">No roles yet. Add some in Admin → Roles.</p>';
+  const joinEl = document.getElementById('join-roles-check');
+  const adminEl = document.getElementById('roles-check');
+  if (joinEl) joinEl.innerHTML = html;
+  if (adminEl) adminEl.innerHTML = html;
+}
 function filterRoster() { renderRoster(); }
 function setFilter(el, f) { activeFilter = f; document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active')); el.classList.add('active'); renderRoster(); }
 
@@ -845,6 +869,7 @@ async function handleGoogleSignIn(response) {
     renderAdminCal();
     renderMembersTable();
     renderGroupsTable();
+    renderRolesTable();
     populateGroupChecks();
     populateNotifyEvents();
   } else {
@@ -1015,7 +1040,10 @@ function renderGroupsTable() {
     '<td style="font-weight:500">' + g.name + '</td>' +
     '<td><span class="tag ' + roleCls(g.type) + '">' + g.type + '</span></td>' +
     '<td style="font-size:12px;color:var(--text-secondary)">' + (g.members.map(id => { const m = members.find(x => x.id === id); return m ? m.first + ' ' + m.last : ''; }).filter(Boolean).join(', ') || '—') + '</td>' +
-    '<td><button class="btn btn-danger btn-sm" onclick="deleteGroup(' + g.id + ')">Remove</button></td>' +
+    '<td class="action-btns">' +
+      '<button class="btn btn-secondary btn-sm" onclick="openEditGroup(' + g.id + ')">Edit</button>' +
+      '<button class="btn btn-danger btn-sm" onclick="deleteGroup(' + g.id + ')">Remove</button>' +
+    '</td>' +
   '</tr>').join('');
 }
 
@@ -1026,9 +1054,96 @@ async function deleteGroup(id) {
   populateGroupChecks();
 }
 
+function openEditGroup(id) {
+  const g = groups.find(x => x.id === id);
+  if (!g) return;
+  const panel = document.getElementById('edit-group-panel');
+  panel.style.display = 'block';
+  panel.innerHTML =
+    '<div class="card-form" style="border-color:var(--accent)">' +
+      '<h3>Edit group</h3>' +
+      '<div class="form-row">' +
+        '<div class="form-group"><label>Group name</label><input type="text" id="eg-name" value="' + g.name + '"></div>' +
+        '<div class="form-group"><label>Type</label><select id="eg-type">' +
+          ['Band','Choir','AV','Special'].map(t => '<option value="' + t + '"' + (t === g.type ? ' selected' : '') + '>' + ({Band:'Band',Choir:'Choir',AV:'AV Team',Special:'Special music'}[t]) + '</option>').join('') +
+        '</select></div>' +
+      '</div>' +
+      '<div class="form-group"><label>Members</label><div class="checkbox-group" id="eg-members">' +
+        members.map(m => '<label class="checkbox-item"><input type="checkbox" value="' + m.id + '"' + (g.members.includes(m.id) ? ' checked' : '') + '> ' + m.first + ' ' + m.last + '</label>').join('') +
+      '</div></div>' +
+      '<div style="display:flex;gap:8px">' +
+        '<button class="btn btn-primary" onclick="saveEditGroup(' + id + ')">Save changes</button>' +
+        '<button class="btn btn-secondary" onclick="closeEditGroup()">Cancel</button>' +
+      '</div>' +
+    '</div>';
+  panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function closeEditGroup() {
+  document.getElementById('edit-group-panel').style.display = 'none';
+  document.getElementById('edit-group-panel').innerHTML = '';
+}
+
+async function saveEditGroup(id) {
+  const name = document.getElementById('eg-name').value.trim();
+  const type = document.getElementById('eg-type').value;
+  if (!name) { alert('Group name cannot be blank.'); return; }
+  const memberIds = [...document.querySelectorAll('#eg-members input:checked')].map(i => parseInt(i.value));
+  const result = await callApi('updateGroup', { id, name, type, memberIds });
+  if (result.error) { alert(result.error); return; }
+  closeEditGroup();
+  await loadAllData();
+  renderGroupsTable();
+  populateGroupChecks();
+}
+
 function populateGroupChecks() {
   document.getElementById('groups-check-member').innerHTML = groups.map(g => '<label class="checkbox-item"><input type="checkbox" value="' + g.name + '"> ' + g.name + '</label>').join('');
   document.getElementById('group-members-check').innerHTML = members.map(m => '<label class="checkbox-item"><input type="checkbox" value="' + m.id + '"> ' + m.first + ' ' + m.last + '</label>').join('');
+}
+
+// ── ROLES ADMIN ───────────────────────────────────────────
+async function addRole() {
+  const name = document.getElementById('role-name').value.trim();
+  if (!name) { alert('Please enter a role name.'); return; }
+  if (roles.some(r => r.name.toLowerCase() === name.toLowerCase())) { alert('That role already exists.'); return; }
+  const result = await callApi('addRole', { name });
+  if (result.error) { alert(result.error); return; }
+  document.getElementById('role-name').value = '';
+  await loadAllData();
+  renderRolesTable();
+}
+
+function renderRolesTable() {
+  const body = document.getElementById('roles-table-body');
+  if (!body) return;
+  body.innerHTML = roles.map(r => '<tr>' +
+    '<td><input type="text" value="' + r.name + '" id="role-edit-' + r.id + '" style="max-width:220px" onkeydown="if(event.key===\'Enter\')saveRoleRename(' + r.id + ')"></td>' +
+    '<td class="action-btns">' +
+      '<button class="btn btn-secondary btn-sm" onclick="saveRoleRename(' + r.id + ')">Save</button>' +
+      '<button class="btn btn-danger btn-sm" onclick="confirmDeleteRole(' + r.id + ',\'' + r.name + '\')">Delete</button>' +
+    '</td>' +
+  '</tr>').join('') || '<tr><td colspan="2" style="color:var(--text-muted)">No roles yet. Add one above.</td></tr>';
+}
+
+async function saveRoleRename(id) {
+  const input = document.getElementById('role-edit-' + id);
+  const newName = input.value.trim();
+  if (!newName) { alert('Role name cannot be blank.'); return; }
+  const result = await callApi('renameRole', { id, name: newName });
+  if (result.error) { alert(result.error); return; }
+  await loadAllData();
+  renderRolesTable();
+  renderMembersTable();
+}
+
+async function confirmDeleteRole(id, name) {
+  if (!confirm('Delete the "' + name + '" role? It will be removed from anyone currently assigned it.')) return;
+  const result = await callApi('deleteRole', { id });
+  if (result.error) { alert(result.error); return; }
+  await loadAllData();
+  renderRolesTable();
+  renderMembersTable();
 }
 
 // ── NOTIFICATIONS ─────────────────────────────────────────
