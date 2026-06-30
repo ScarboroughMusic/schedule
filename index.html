@@ -424,6 +424,7 @@
           <tbody id="members-table-body"></tbody>
         </table>
       </div>
+      <div id="edit-member-panel" style="display:none"></div>
     </div>
 
     <!-- GROUPS ADMIN -->
@@ -676,6 +677,18 @@ function sameDay(a, b) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
+function fullName(m) {
+  if (!m) return '';
+  return (m.first || '') + (m.last ? ' ' + m.last : '');
+}
+
+function initials(m) {
+  if (!m) return '?';
+  const a = m.first ? m.first[0] : '';
+  const b = m.last ? m.last[0] : '';
+  return (a + b) || '?';
+}
+
 // ── NAVIGATION ────────────────────────────────────────────
 function showPage(name, btn) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -750,7 +763,7 @@ function showEventModal(id) {
   assigns.innerHTML = e.assignedIds.map((mid, i) => {
     const m = members.find(x => x.id === mid);
     const role = e.assignedRoles[i] || '';
-    return m ? '<div class="assignment-row"><div class="mini-avatar av-' + m.color + '">' + m.first[0] + m.last[0] + '</div><div class="assignment-name">' + m.first + ' ' + m.last + '</div><div class="assignment-role">' + role + '</div></div>' : '';
+    return m ? '<div class="assignment-row"><div class="mini-avatar av-' + m.color + '">' + initials(m) + '</div><div class="assignment-name">' + fullName(m) + '</div><div class="assignment-role">' + role + '</div></div>' : '';
   }).join('') || '<p style="font-size:13px;color:var(--text-muted)">No one assigned yet.</p>';
   document.getElementById('event-modal').classList.add('open');
 }
@@ -760,15 +773,14 @@ function closeModal() { document.getElementById('event-modal').classList.remove(
 function renderRoster() {
   const query = (document.getElementById('roster-search') || { value: '' }).value.toLowerCase();
   const filtered = members.filter(m => {
-    const matchSearch = !query || (m.first + ' ' + m.last).toLowerCase().includes(query) || m.email.toLowerCase().includes(query);
+    const matchSearch = !query || (fullName(m)).toLowerCase().includes(query) || (m.email || '').toLowerCase().includes(query);
     const matchFilter = activeFilter === 'all' || m.roles.includes(activeFilter);
     return matchSearch && matchFilter;
   });
   document.getElementById('member-grid').innerHTML = filtered.map(m => '<div class="member-card">' +
-    '<div class="avatar av-' + m.color + '">' + m.first[0] + m.last[0] + '</div>' +
+    '<div class="avatar av-' + m.color + '">' + initials(m) + '</div>' +
     '<div class="member-info">' +
-      '<div class="member-name">' + m.first + ' ' + m.last + '</div>' +
-      '<div class="member-email">' + m.email + '</div>' +
+      '<div class="member-name">' + fullName(m) + '</div>' +
       '<div class="member-tags">' +
         m.roles.map(r => '<span class="tag ' + roleCls(r) + '">' + r + '</span>').join('') +
         m.groups.map(g => '<span class="tag" style="background:var(--surface-2);color:var(--text-secondary)">' + g + '</span>').join('') +
@@ -821,7 +833,7 @@ function renderGroups() {
     '<div class="group-members">' +
       g.members.map(id => {
         const m = members.find(x => x.id === id);
-        return m ? '<div class="group-member-row"><div class="mini-avatar av-' + m.color + '">' + m.first[0] + m.last[0] + '</div><div class="group-member-name">' + m.first + ' ' + m.last + '</div><div class="group-member-role">' + m.roles.join(', ') + '</div></div>' : '';
+        return m ? '<div class="group-member-row"><div class="mini-avatar av-' + m.color + '">' + initials(m) + '</div><div class="group-member-name">' + fullName(m) + '</div><div class="group-member-role">' + m.roles.join(', ') + '</div></div>' : '';
       }).join('') +
     '</div></div>').join('') || '<p style="font-size:13px;color:var(--text-muted)">No groups created yet.</p>';
 }
@@ -1002,7 +1014,7 @@ async function addMember() {
   const first = document.getElementById('m-first').value.trim();
   const last = document.getElementById('m-last').value.trim();
   const email = document.getElementById('m-email').value.trim();
-  if (!first || !last || !email) { alert('Please fill in name and email.'); return; }
+  if (!first) { alert('First name is required.'); return; }
   const roles = [...document.querySelectorAll('#roles-check input:checked')].map(i => i.value);
   const grps = [...document.querySelectorAll('#groups-check-member input:checked')].map(i => i.value);
   const result = await callApi('addMember', { first, last, email, roles, groups: grps, reminderDays: 2 });
@@ -1019,16 +1031,70 @@ async function addMember() {
 
 function renderMembersTable() {
   document.getElementById('members-table-body').innerHTML = members.map(m => '<tr>' +
-    '<td style="font-weight:500">' + m.first + ' ' + m.last + '</td>' +
-    '<td style="color:var(--text-secondary)">' + m.email + '</td>' +
+    '<td style="font-weight:500">' + fullName(m) + '</td>' +
+    '<td style="color:var(--text-secondary)">' + (m.email || '<span style="color:var(--text-muted);font-style:italic">not set</span>') + '</td>' +
     '<td>' + m.roles.map(r => '<span class="tag ' + roleCls(r) + '">' + r + '</span>').join(' ') + '</td>' +
     '<td style="color:var(--text-secondary);font-size:12px">' + (m.groups.join(', ') || '—') + '</td>' +
-    '<td><button class="btn btn-danger btn-sm" onclick="deleteMember(' + m.id + ')">Remove</button></td>' +
+    '<td class="action-btns">' +
+      '<button class="btn btn-secondary btn-sm" onclick="openEditMember(' + m.id + ')">Edit</button>' +
+      '<button class="btn btn-danger btn-sm" onclick="deleteMember(' + m.id + ')">Remove</button>' +
+    '</td>' +
   '</tr>').join('');
 }
 
 async function deleteMember(id) {
   await callApi('deleteMember', { id });
+  await loadAllData();
+  renderMembersTable();
+  populateGroupChecks();
+}
+
+function openEditMember(id) {
+  const m = members.find(x => x.id === id);
+  if (!m) return;
+  const panel = document.getElementById('edit-member-panel');
+  panel.style.display = 'block';
+  panel.innerHTML =
+    '<div class="card-form" style="border-color:var(--accent)">' +
+      '<h3>Edit member</h3>' +
+      '<div class="form-row">' +
+        '<div class="form-group"><label>First name</label><input type="text" id="em-first" value="' + (m.first || '') + '"></div>' +
+        '<div class="form-group"><label>Last name</label><input type="text" id="em-last" value="' + (m.last || '') + '"></div>' +
+      '</div>' +
+      '<div class="form-group"><label>Email</label><input type="email" id="em-email" value="' + (m.email || '') + '" placeholder="Optional"></div>' +
+      '<div class="form-group"><label>Roles</label><div class="checkbox-group" id="em-roles">' +
+        roles.map(r => '<label class="checkbox-item"><input type="checkbox" value="' + r.name + '"' + (m.roles.includes(r.name) ? ' checked' : '') + '> ' + r.name + '</label>').join('') +
+      '</div></div>' +
+      '<div class="form-group"><label>Groups</label><div class="checkbox-group" id="em-groups">' +
+        groups.map(g => '<label class="checkbox-item"><input type="checkbox" value="' + g.name + '"' + (m.groups.includes(g.name) ? ' checked' : '') + '> ' + g.name + '</label>').join('') +
+      '</div></div>' +
+      '<div class="form-group"><label>Remind me</label><select id="em-reminder">' +
+        [1, 2, 3, 7].map(d => '<option value="' + d + '"' + (Number(m.reminderDays) === d ? ' selected' : '') + '>' + d + ' day' + (d !== 1 ? 's' : '') + ' before</option>').join('') +
+      '</select></div>' +
+      '<div style="display:flex;gap:8px">' +
+        '<button class="btn btn-primary" onclick="saveEditMember(' + id + ')">Save changes</button>' +
+        '<button class="btn btn-secondary" onclick="closeEditMember()">Cancel</button>' +
+      '</div>' +
+    '</div>';
+  panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function closeEditMember() {
+  document.getElementById('edit-member-panel').style.display = 'none';
+  document.getElementById('edit-member-panel').innerHTML = '';
+}
+
+async function saveEditMember(id) {
+  const first = document.getElementById('em-first').value.trim();
+  const last = document.getElementById('em-last').value.trim();
+  const email = document.getElementById('em-email').value.trim();
+  if (!first) { alert('First name is required.'); return; }
+  const roleVals = [...document.querySelectorAll('#em-roles input:checked')].map(i => i.value);
+  const groupVals = [...document.querySelectorAll('#em-groups input:checked')].map(i => i.value);
+  const reminderDays = document.getElementById('em-reminder').value;
+  const result = await callApi('updateMember', { id, first, last, email, roles: roleVals, groups: groupVals, reminderDays });
+  if (result.error) { alert(result.error); return; }
+  closeEditMember();
   await loadAllData();
   renderMembersTable();
   populateGroupChecks();
@@ -1053,7 +1119,7 @@ function renderGroupsTable() {
   document.getElementById('groups-table-body').innerHTML = groups.map(g => '<tr>' +
     '<td style="font-weight:500">' + g.name + '</td>' +
     '<td><span class="tag ' + roleCls(g.type) + '">' + g.type + '</span></td>' +
-    '<td style="font-size:12px;color:var(--text-secondary)">' + (g.members.map(id => { const m = members.find(x => x.id === id); return m ? m.first + ' ' + m.last : ''; }).filter(Boolean).join(', ') || '—') + '</td>' +
+    '<td style="font-size:12px;color:var(--text-secondary)">' + (g.members.map(id => { const m = members.find(x => x.id === id); return m ? fullName(m) : ''; }).filter(Boolean).join(', ') || '—') + '</td>' +
     '<td class="action-btns">' +
       '<button class="btn btn-secondary btn-sm" onclick="openEditGroup(' + g.id + ')">Edit</button>' +
       '<button class="btn btn-danger btn-sm" onclick="deleteGroup(' + g.id + ')">Remove</button>' +
@@ -1083,7 +1149,7 @@ function openEditGroup(id) {
         '</select></div>' +
       '</div>' +
       '<div class="form-group"><label>Members</label><div class="checkbox-group" id="eg-members">' +
-        members.map(m => '<label class="checkbox-item"><input type="checkbox" value="' + m.id + '"' + (g.members.includes(m.id) ? ' checked' : '') + '> ' + m.first + ' ' + m.last + '</label>').join('') +
+        members.map(m => '<label class="checkbox-item"><input type="checkbox" value="' + m.id + '"' + (g.members.includes(m.id) ? ' checked' : '') + '> ' + fullName(m) + '</label>').join('') +
       '</div></div>' +
       '<div style="display:flex;gap:8px">' +
         '<button class="btn btn-primary" onclick="saveEditGroup(' + id + ')">Save changes</button>' +
@@ -1113,7 +1179,7 @@ async function saveEditGroup(id) {
 
 function populateGroupChecks() {
   document.getElementById('groups-check-member').innerHTML = groups.map(g => '<label class="checkbox-item"><input type="checkbox" value="' + g.name + '"> ' + g.name + '</label>').join('');
-  document.getElementById('group-members-check').innerHTML = members.map(m => '<label class="checkbox-item"><input type="checkbox" value="' + m.id + '"> ' + m.first + ' ' + m.last + '</label>').join('');
+  document.getElementById('group-members-check').innerHTML = members.map(m => '<label class="checkbox-item"><input type="checkbox" value="' + m.id + '"> ' + fullName(m) + '</label>').join('');
 }
 
 // ── ROLES ADMIN ───────────────────────────────────────────
@@ -1177,7 +1243,7 @@ function previewNotify() {
   const preview = document.getElementById('notify-preview');
   preview.style.display = 'block';
   preview.innerHTML =
-    '<strong>To:</strong> ' + recipientMembers.length + ' member' + (recipientMembers.length !== 1 ? 's' : '') + ' — ' + recipientMembers.map(m => m.first + ' ' + m.last).join(', ') + '<br><br>' +
+    '<strong>To:</strong> ' + recipientMembers.length + ' member' + (recipientMembers.length !== 1 ? 's' : '') + ' — ' + recipientMembers.map(m => fullName(m)).join(', ') + '<br><br>' +
     '<strong>Subject:</strong> Reminder: ' + ev.title + ' — ' + ev.date.toLocaleDateString('en-CA', { weekday: 'long', month: 'long', day: 'numeric' }) + '<br><br>' +
     'Hi [Name],<br><br>This is a reminder that <strong>' + ev.title + '</strong> is coming up on <strong>' + ev.date.toLocaleDateString('en-CA', { weekday: 'long', month: 'long', day: 'numeric' }) + '</strong> at <strong>' + ev.time + '</strong>.' + (msg ? '<br><br>' + msg : '') + '<br><br>See the full schedule at our music department page.<br><br>Scarborough SDA Music Department' +
     '<br><br><button class="btn btn-primary btn-sm" onclick="sendNotifyNow(' + ev.id + ')">Send this now</button>';
